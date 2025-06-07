@@ -11,8 +11,7 @@ class Document extends Model
     protected $fillable = [
         'user_id',
         'title',
-        'file_path',
-        'extracted_text',
+        'description',
         'status',
     ];
 
@@ -22,6 +21,14 @@ class Document extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the files for the document.
+     */
+    public function files(): HasMany
+    {
+        return $this->hasMany(DocumentFile::class)->orderBy('order');
     }
 
     /**
