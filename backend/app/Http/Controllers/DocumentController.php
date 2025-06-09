@@ -16,6 +16,18 @@ class DocumentController extends Controller
     public function __construct(PDFProcessingService $pdfService)
     {
         $this->pdfService = $pdfService;
+        // Add middleware to check document ownership for specific methods
+        $this->middleware(function ($request, $next) {
+            if ($request->route('document')) {
+                $document = $request->route('document');
+                if ($document->user_id !== Auth::id()) {
+                    return response()->json([
+                        'message' => 'Unauthorized access'
+                    ], 403);
+                }
+            }
+            return $next($request);
+        })->only(['show', 'destroy', 'update']);
     }
 
     /**
@@ -105,15 +117,8 @@ class DocumentController extends Controller
      */
     public function show(Document $document)
     {
-        // Check if the authenticated user owns the document
-        if ($document->user_id !== Auth::id()) {
-            return response()->json([
-                'message' => 'Unauthorized access'
-            ], 403);
-        }
-
         return response()->json([
-            'document' => $document->load('files')
+            'document' => $document->load(['files', 'studyNotes', 'flashcards', 'quizQuestions'])
         ]);
     }
 
@@ -122,13 +127,6 @@ class DocumentController extends Controller
      */
     public function destroy(Document $document)
     {
-        // Check if the authenticated user owns the document
-        if ($document->user_id !== Auth::id()) {
-            return response()->json([
-                'message' => 'Unauthorized access'
-            ], 403);
-        }
-
         try {
             DB::beginTransaction();
 

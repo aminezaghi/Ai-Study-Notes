@@ -40,28 +40,7 @@
 						},
 						"description": "Register a new user. Returns a success message."
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/register"
-								}
-							},
-							"status": "Created",
-							"code": 201,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Account created successfully\"\n}"
-						}
-					]
+					"response": []
 				},
 				{
 					"name": "Login",
@@ -109,28 +88,7 @@
 						},
 						"description": "Login user and get access token. Returns only the token."
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/login"
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"access_token\": \"1|example_token_string\"\n}"
-						}
-					]
+					"response": []
 				},
 				{
 					"name": "Logout",
@@ -160,24 +118,7 @@
 						},
 						"description": "Logout user and invalidate token. Returns a success message."
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "POST",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/logout"
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Successfully logged out\"\n}"
-						}
-					]
+					"response": []
 				},
 				{
 					"name": "Get User Profile",
@@ -207,24 +148,7 @@
 						},
 						"description": "Get authenticated user profile. Returns user details."
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/user"
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"user\": {\n        \"id\": 1,\n        \"name\": \"Test User\",\n        \"email\": \"test@example.com\",\n        \"email_verified_at\": null,\n        \"created_at\": \"2024-03-07T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-07T12:00:00.000000Z\"\n    }\n}"
-						}
-					]
+					"response": []
 				}
 			]
 		},
@@ -257,26 +181,9 @@
 								"documents"
 							]
 						},
-						"description": "Get a list of all documents for the authenticated user."
+						"description": "Get all documents for the authenticated user"
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents"
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"documents\": [\n        {\n            \"id\": 1,\n            \"title\": \"Lecture Series 1\",\n            \"description\": \"Introduction to Computer Science\",\n            \"status\": \"completed\",\n            \"created_at\": \"2024-03-07T12:00:00.000000Z\",\n            \"updated_at\": \"2024-03-07T12:00:00.000000Z\",\n            \"files\": [\n                {\n                    \"id\": 1,\n                    \"original_filename\": \"lecture1.pdf\",\n                    \"page_count\": 15,\n                    \"order\": 0\n                },\n                {\n                    \"id\": 2,\n                    \"original_filename\": \"lecture2.pdf\",\n                    \"page_count\": 20,\n                    \"order\": 1\n                }\n            ]\n        }\n    ]\n}"
-						}
-					]
+					"response": []
 				},
 				{
 					"name": "Upload Document",
@@ -299,19 +206,18 @@
 							"formdata": [
 								{
 									"key": "title",
-									"value": "Lecture Series 1",
+									"value": "Test Document",
 									"type": "text"
 								},
 								{
 									"key": "description",
-									"value": "Introduction to Computer Science",
+									"value": "Test document description",
 									"type": "text"
 								},
 								{
 									"key": "files[]",
 									"type": "file",
-									"src": [],
-									"description": "Select one or more PDF files. You can add multiple files by clicking the 'Add more' button in Postman."
+									"src": []
 								}
 							]
 						},
@@ -325,30 +231,9 @@
 								"documents"
 							]
 						},
-						"description": "Upload a new document with multiple PDF files."
+						"description": "Upload a new document with PDF files"
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "formdata",
-									"formdata": []
-								},
-								"url": {
-									"raw": "{{base_url}}/api/documents"
-								}
-							},
-							"status": "Created",
-							"code": 201,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Document uploaded successfully\",\n    \"document\": {\n        \"id\": 1,\n        \"title\": \"Lecture Series 1\",\n        \"description\": \"Introduction to Computer Science\",\n        \"status\": \"completed\",\n        \"created_at\": \"2024-03-07T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-07T12:00:00.000000Z\",\n        \"files\": [\n            {\n                \"id\": 1,\n                \"original_filename\": \"lecture1.pdf\",\n                \"page_count\": 15,\n                \"order\": 0\n            },\n            {\n                \"id\": 2,\n                \"original_filename\": \"lecture2.pdf\",\n                \"page_count\": 20,\n                \"order\": 1\n            }\n        ]\n    }\n}"
-						}
-					]
+					"response": []
 				},
 				{
 					"name": "Get Document",
@@ -367,36 +252,25 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/documents/1",
+							"raw": "{{base_url}}/api/documents/:id",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"documents",
-								"1"
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
 							]
 						},
-						"description": "Get details of a specific document."
+						"description": "Get a specific document with its files, study notes, and flashcards"
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/1"
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"document\": {\n        \"id\": 1,\n        \"title\": \"Lecture Series 1\",\n        \"description\": \"Introduction to Computer Science\",\n        \"status\": \"completed\",\n        \"created_at\": \"2024-03-07T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-07T12:00:00.000000Z\",\n        \"files\": [\n            {\n                \"id\": 1,\n                \"original_filename\": \"lecture1.pdf\",\n                \"page_count\": 15,\n                \"order\": 0\n            },\n            {\n                \"id\": 2,\n                \"original_filename\": \"lecture2.pdf\",\n                \"page_count\": 20,\n                \"order\": 1\n            }\n        ]\n    }\n}"
-						}
-					]
+					"response": []
 				},
 				{
 					"name": "Delete Document",
@@ -415,42 +289,70 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/documents/1",
+							"raw": "{{base_url}}/api/documents/:id",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"documents",
-								"1"
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
 							]
 						},
-						"description": "Delete a document and all its associated files."
+						"description": "Delete a document and all its associated files"
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "DELETE",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/1"
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Document deleted successfully\"\n}"
-						}
-					]
+					"response": []
 				}
 			]
 		},
 		{
 			"name": "Study Notes",
 			"item": [
+				{
+					"name": "List Study Notes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/:document_id/notes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								":document_id",
+								"notes"
+							],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "ID of the document"
+								}
+							]
+						},
+						"description": "Get all study notes for a specific document"
+					},
+					"response": []
+				},
 				{
 					"name": "Generate Study Notes",
 					"request": {
@@ -483,65 +385,21 @@
 								{
 									"key": "document_id",
 									"value": "1",
-									"description": "ID of the document to generate notes for"
+									"description": "ID of the document"
 								}
 							]
 						},
-						"description": "Generate study notes for a specific document using AI. This will process the document's text and create study notes with summaries and key points."
+						"description": "Generate study notes for a document using AI"
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "POST",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/1/notes/generate"
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Study notes generated successfully\",\n    \"study_notes\": [\n        {\n            \"id\": 1,\n            \"document_id\": 1,\n            \"summary\": \"This is a concise summary of the document...\",\n            \"content\": \"Detailed study notes with key concepts and bullet points...\",\n            \"created_at\": \"2024-03-07T12:00:00.000000Z\",\n            \"updated_at\": \"2024-03-07T12:00:00.000000Z\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "Error - Document Not Found",
-							"originalRequest": {
-								"method": "POST",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/999/notes/generate"
-								}
-							},
-							"status": "Not Found",
-							"code": 404,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Document not found\"\n}"
-						},
-						{
-							"name": "Error - Unauthorized",
-							"originalRequest": {
-								"method": "POST",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/1/notes/generate"
-								}
-							},
-							"status": "Forbidden",
-							"code": 403,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Unauthorized access\"\n}"
-						}
-					]
-				},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Flashcards",
+			"item": [
 				{
-					"name": "Get Study Notes",
+					"name": "List Flashcards",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -557,7 +415,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/documents/:document_id/notes",
+							"raw": "{{base_url}}/api/documents/:document_id/flashcards",
 							"host": [
 								"{{base_url}}"
 							],
@@ -565,68 +423,104 @@
 								"api",
 								"documents",
 								":document_id",
-								"notes"
+								"flashcards"
 							],
 							"variable": [
 								{
 									"key": "document_id",
 									"value": "1",
-									"description": "ID of the document to get notes for"
+									"description": "ID of the document"
 								}
 							]
 						},
-						"description": "Get all study notes for a specific document."
+						"description": "Get all flashcards for a specific document"
 					},
-					"response": [
-						{
-							"name": "Success",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/1/notes"
-								}
+					"response": []
+				},
+				{
+					"name": "Generate Flashcards",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
 							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"study_notes\": [\n        {\n            \"id\": 1,\n            \"document_id\": 1,\n            \"summary\": \"This is a concise summary of the document...\",\n            \"content\": \"Detailed study notes with key concepts and bullet points...\",\n            \"created_at\": \"2024-03-07T12:00:00.000000Z\",\n            \"updated_at\": \"2024-03-07T12:00:00.000000Z\"\n        }\n    ]\n}"
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/:document_id/flashcards/generate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								":document_id",
+								"flashcards",
+								"generate"
+							],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "ID of the document"
+								}
+							]
 						},
-						{
-							"name": "Error - Document Not Found",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/999/notes"
-								}
+						"description": "Generate flashcards for a document using AI (requires study notes to be generated first)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Flashcard",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
 							},
-							"status": "Not Found",
-							"code": 404,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Document not found\"\n}"
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/:document_id/flashcards/:flashcard_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								":document_id",
+								"flashcards",
+								":flashcard_id"
+							],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "ID of the document"
+								},
+								{
+									"key": "flashcard_id",
+									"value": "1",
+									"description": "ID of the flashcard to delete"
+								}
+							]
 						},
-						{
-							"name": "Error - Unauthorized",
-							"originalRequest": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{base_url}}/api/documents/1/notes"
-								}
-							},
-							"status": "Forbidden",
-							"code": 403,
-							"_postman_previewlanguage": "json",
-							"header": [],
-							"cookie": [],
-							"body": "{\n    \"message\": \"Unauthorized access\"\n}"
-						}
-					]
+						"description": "Delete a specific flashcard"
+					},
+					"response": []
 				}
 			]
 		}
