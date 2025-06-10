@@ -57,22 +57,37 @@ CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255),
     email VARCHAR(255) UNIQUE,
+    email_verified_at TIMESTAMP NULL,
     password VARCHAR(255),
+    remember_token VARCHAR(100),
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
 
--- Documents table (PDF uploads)
+-- Documents table
 CREATE TABLE documents (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT,
     title VARCHAR(255),
-    file_path VARCHAR(255),
-    extracted_text LONGTEXT,
+    description TEXT NULL,
     status ENUM('pending', 'processing', 'completed', 'failed'),
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Document Files table
+CREATE TABLE document_files (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    document_id BIGINT,
+    original_filename VARCHAR(255),
+    file_path VARCHAR(255),
+    page_count INT DEFAULT 0,
+    extracted_text LONGTEXT,
+    order INT DEFAULT 0,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 );
 
 -- Study Notes table
@@ -83,7 +98,7 @@ CREATE TABLE study_notes (
     summary TEXT,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    FOREIGN KEY (document_id) REFERENCES documents(id)
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 );
 
 -- Flashcards table
@@ -94,19 +109,35 @@ CREATE TABLE flashcards (
     answer TEXT,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    FOREIGN KEY (document_id) REFERENCES documents(id)
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+);
+
+-- Quizzes table
+CREATE TABLE quizzes (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    document_id BIGINT,
+    title VARCHAR(255),
+    type ENUM('multiple_choice', 'true_false', 'fill_in_blanks'),
+    total_questions INT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 );
 
 -- Quiz Questions table
 CREATE TABLE quiz_questions (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     document_id BIGINT,
+    quiz_id BIGINT,
     question TEXT,
+    type ENUM('multiple_choice', 'true_false', 'fill_in_blanks'),
+    options JSON NULL,
     correct_answer TEXT,
-    options JSON, -- Stores array of possible answers
+    explanation TEXT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    FOREIGN KEY (document_id) REFERENCES documents(id)
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
 );
 ```
 
