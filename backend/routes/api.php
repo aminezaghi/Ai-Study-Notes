@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\StudyNoteController;
 use App\Http\Controllers\FlashcardController;
+use App\Http\Controllers\QuizController;
 
 // Public routes
 Route::post('register', [AuthController::class, 'register']);
@@ -28,4 +29,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents/{document}/flashcards', [FlashcardController::class, 'index']);
     Route::post('/documents/{document}/flashcards/generate', [FlashcardController::class, 'generate']);
     Route::delete('/documents/{document}/flashcards/{flashcard}', [FlashcardController::class, 'destroy']);
+
+    // Quizzes
+    Route::get('/documents/{document}/quizzes', [QuizController::class, 'index']);
+    Route::post('/documents/{document}/quizzes/generate', [QuizController::class, 'generate']);
+    Route::get('/documents/{document}/quizzes/{quiz}', [QuizController::class, 'show']);
+    Route::delete('/documents/{document}/quizzes/{quiz}', [QuizController::class, 'destroy']);
 }); 

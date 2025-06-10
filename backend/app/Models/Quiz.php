@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class QuizQuestion extends Model
+class Quiz extends Model
 {
     protected $fillable = [
         'document_id',
-        'quiz_id',
-        'question',
+        'title',
         'type',
-        'options',
-        'correct_answer',
-        'explanation',
+        'total_questions',
     ];
 
     /**
@@ -23,11 +21,11 @@ class QuizQuestion extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'options' => 'array',
+        'total_questions' => 'integer',
     ];
 
     /**
-     * Get the document that owns the quiz question.
+     * Get the document that owns the quiz.
      */
     public function document(): BelongsTo
     {
@@ -35,10 +33,10 @@ class QuizQuestion extends Model
     }
 
     /**
-     * Get the quiz that owns the question.
+     * Get the questions for the quiz.
      */
-    public function quiz(): BelongsTo
+    public function questions(): HasMany
     {
-        return $this->belongsTo(Quiz::class);
+        return $this->hasMany(QuizQuestion::class);
     }
-}
+} 

@@ -43,10 +43,14 @@ class FlashcardController extends Controller
     /**
      * Generate flashcards for a document
      */
-    public function generate(Document $document)
+    public function generate(Request $request, Document $document)
     {
         // Set PHP execution time limit to 5 minutes for this request
         set_time_limit(300);
+
+        $request->validate([
+            'num_cards' => 'required|integer|min:1|max:50'
+        ]);
 
         try {
             // Get study notes for this document
@@ -69,7 +73,7 @@ class FlashcardController extends Controller
             
             try {
                 // Generate flashcards using AI
-                $response = $this->aiService->generateFlashcards($combinedSummary);
+                $response = $this->aiService->generateFlashcards($combinedSummary, $request->num_cards);
                 
                 // Log the response for debugging
                 Log::debug('AI Service response:', ['response' => $response]);

@@ -7,6 +7,7 @@ use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class StudyNoteController extends Controller
 {
@@ -34,9 +35,40 @@ class StudyNoteController extends Controller
      */
     public function index(Document $document)
     {
-        return response()->json([
-            'study_notes' => $document->studyNotes
-        ]);
+        try {
+            // Check if document has any study notes
+            $studyNotes = $document->studyNotes;
+
+            if ($studyNotes->isEmpty()) {
+                return response()->json([
+                    'message' => 'No study notes found for this document',
+                    'study_notes' => []
+                ], 200); // Using 200 since empty result is not an error
+            }
+
+            // Log successful retrieval
+            Log::info('Successfully retrieved study notes', [
+                'document_id' => $document->id,
+                'notes_count' => $studyNotes->count(),
+                'total_content_length' => $studyNotes->sum(function($note) {
+                    return strlen($note->content);
+                })
+            ]);
+
+            return response()->json([
+                'study_notes' => $studyNotes
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve study notes: ' . $e->getMessage(), [
+                'document_id' => $document->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to retrieve study notes: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -48,15 +80,46 @@ class StudyNoteController extends Controller
         set_time_limit(300);
 
         try {
-            // Get all document files
+            // Check if document has any files
             $files = $document->files()->orderBy('order')->get();
+            
+            if ($files->isEmpty()) {
+                Log::warning('No files found for document', [
+                    'document_id' => $document->id
+                ]);
+                return response()->json([
+                    'message' => 'No files found in this document. Please upload files first.'
+                ], 404);
+            }
+
+            // Start database transaction
+            DB::beginTransaction();
             
             // Delete existing study notes for this document
             $document->studyNotes()->delete();
             
+            $processedFiles = 0;
+            $failedFiles = 0;
+            
             // Generate study notes for each file
             foreach ($files as $file) {
                 try {
+                    // Check if file has extracted text
+                    if (empty($file->extracted_text)) {
+                        Log::warning('File has no extracted text', [
+                            'document_id' => $document->id,
+                            'file_id' => $file->id
+                        ]);
+                        $failedFiles++;
+                        continue;
+                    }
+
+                    // Log the length of text being sent to AI
+                    Log::info('Generating study notes from text', [
+                        'file_id' => $file->id,
+                        'text_length' => strlen($file->extracted_text)
+                    ]);
+
                     // Generate study notes using AI
                     $noteContent = $this->aiService->generateStudyNote($file->extracted_text);
                     
@@ -80,27 +143,71 @@ class StudyNoteController extends Controller
                         'content' => trim($content),
                         'summary' => trim($summary)
                     ]);
+
+                    $processedFiles++;
+                    
                 } catch (\Exception $e) {
-                    Log::error('Failed to process file ' . $file->id . ': ' . $e->getMessage());
-                    // Continue with next file instead of failing completely
+                    Log::error('Failed to process file: ' . $e->getMessage(), [
+                        'document_id' => $document->id,
+                        'file_id' => $file->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    $failedFiles++;
                     continue;
                 }
             }
 
             // Check if any notes were generated
-            if ($document->studyNotes()->count() === 0) {
+            if ($processedFiles === 0) {
+                DB::rollBack();
+                Log::error('Failed to generate any study notes', [
+                    'document_id' => $document->id,
+                    'total_files' => $files->count(),
+                    'failed_files' => $failedFiles
+                ]);
+                
                 return response()->json([
                     'message' => 'Failed to generate any study notes. Please try again.'
                 ], 500);
             }
 
+            // If some files failed but at least one succeeded
+            if ($failedFiles > 0) {
+                Log::warning('Some files failed during study note generation', [
+                    'document_id' => $document->id,
+                    'processed_files' => $processedFiles,
+                    'failed_files' => $failedFiles
+                ]);
+            }
+
+            DB::commit();
+
+            // Log success
+            Log::info('Successfully generated study notes', [
+                'document_id' => $document->id,
+                'processed_files' => $processedFiles,
+                'failed_files' => $failedFiles,
+                'total_notes' => $document->studyNotes()->count()
+            ]);
+
             return response()->json([
-                'message' => 'Study notes generated successfully',
-                'study_notes' => $document->studyNotes
+                'message' => $failedFiles > 0 
+                    ? 'Study notes generated with some failures. Some files could not be processed.'
+                    : 'Study notes generated successfully',
+                'study_notes' => $document->studyNotes,
+                'stats' => [
+                    'total_files' => $files->count(),
+                    'processed_files' => $processedFiles,
+                    'failed_files' => $failedFiles
+                ]
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to generate study notes: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Study note generation failed: ' . $e->getMessage(), [
+                'document_id' => $document->id,
+                'error' => $e->getMessage()
+            ]);
             
             return response()->json([
                 'message' => 'Failed to generate study notes: ' . $e->getMessage()

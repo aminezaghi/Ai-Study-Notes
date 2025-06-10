@@ -451,8 +451,17 @@
 								"key": "Authorization",
 								"value": "Bearer {{auth_token}}",
 								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"num_cards\": 5\n}"
+						},
 						"url": {
 							"raw": "{{base_url}}/api/documents/:document_id/flashcards/generate",
 							"host": [
@@ -473,7 +482,7 @@
 								}
 							]
 						},
-						"description": "Generate flashcards for a document using AI (requires study notes to be generated first)"
+						"description": "Generate flashcards for a document using AI (requires study notes to be generated first). Use num_cards parameter to specify how many flashcards you want (1-50)."
 					},
 					"response": []
 				},
@@ -519,6 +528,189 @@
 							]
 						},
 						"description": "Delete a specific flashcard"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Quizzes",
+			"item": [
+				{
+					"name": "List Quizzes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/:document_id/quizzes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								":document_id",
+								"quizzes"
+							],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "ID of the document"
+								}
+							]
+						},
+						"description": "Get all quizzes for a specific document"
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Quiz",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Test Quiz\",\n    \"type\": \"multiple_choice\",\n    \"num_questions\": 5\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/documents/:document_id/quizzes/generate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								":document_id",
+								"quizzes",
+								"generate"
+							],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "ID of the document"
+								}
+							]
+						},
+						"description": "Generate a quiz for a document using AI (requires study notes to be generated first). Quiz type can be 'multiple_choice', 'true_false', or 'fill_in_blanks'."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Quiz",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/:document_id/quizzes/:quiz_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								":document_id",
+								"quizzes",
+								":quiz_id"
+							],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "ID of the document"
+								},
+								{
+									"key": "quiz_id",
+									"value": "1",
+									"description": "ID of the quiz"
+								}
+							]
+						},
+						"description": "Get a specific quiz with its questions"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Quiz",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/documents/:document_id/quizzes/:quiz_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								":document_id",
+								"quizzes",
+								":quiz_id"
+							],
+							"variable": [
+								{
+									"key": "document_id",
+									"value": "1",
+									"description": "ID of the document"
+								},
+								{
+									"key": "quiz_id",
+									"value": "1",
+									"description": "ID of the quiz"
+								}
+							]
+						},
+						"description": "Delete a specific quiz and its questions"
 					},
 					"response": []
 				}

@@ -54,4 +54,12 @@ class Document extends Model
     {
         return $this->hasMany(QuizQuestion::class);
     }
+
+    /**
+     * Get the quizzes for the document.
+     */
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
 }
