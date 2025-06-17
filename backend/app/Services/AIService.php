@@ -12,7 +12,7 @@ class AIService
     private string $endpoint;
     private Client $client;
     private const MAX_TOKENS_PER_REQUEST = 30000; // Conservative limit for safety
-    private const ESTIMATED_TOKENS_PER_CHAR = 0.33; // Rough estimate of tokens per character
+    private const ESTIMATED_TOKENS_PER_CHAR = 0.25; // More conservative estimate (4 chars per token)
 
     public function __construct()
     {
@@ -421,108 +421,157 @@ class AIService
     }
 
     /**
-     * Process large text by splitting it into chunks
+     * Process large text by splitting into chunks and combining results
      */
     private function processLargeText(string $text): array
     {
         try {
-            // Calculate chunk size based on token limit
-            $maxCharsPerChunk = (self::MAX_TOKENS_PER_REQUEST / self::ESTIMATED_TOKENS_PER_CHAR);
-            $chunks = $this->splitTextIntoChunks($text, (int)$maxCharsPerChunk);
+            // Split text into manageable chunks
+            $chunks = $this->splitTextIntoChunks($text, floor(self::MAX_TOKENS_PER_REQUEST / self::ESTIMATED_TOKENS_PER_CHAR));
             
-            $summaries = [];
-            $contents = [];
+            $combinedSummary = '';
+            $combinedContent = '';
+            $chunkResults = [];
             
-            foreach ($chunks as $chunk) {
+            // Process each chunk
+            foreach ($chunks as $index => $chunk) {
                 try {
-                    $prompt = "You are an expert study notes generator. " .
-                             "First, detect the language of the provided text. " .
-                             "Analyze this section of text thoroughly and provide detailed key points and summary IN THE SAME LANGUAGE as the input text. " .
-                             "Focus on extracting:\n" .
-                             "- Specific facts, figures, and data\n" .
-                             "- Technical terms and their definitions\n" .
-                             "- Detailed examples and case studies\n" .
-                             "- Complex relationships between concepts\n" .
-                             "Do not use markdown or code blocks in your response. " .
-                             "Make sure your entire response is in the SAME LANGUAGE as the input text. " .
-                             "Don't oversimplify - maintain the level of detail needed for effective flashcards and quizzes.\n\n" . $chunk;
+                    Log::info("Processing chunk " . ($index + 1) . " of " . count($chunks));
                     
-                    $response = $this->makeRequest($prompt);
+                    // Add context about this being part of a larger document
+                    $contextPrefix = "This is part " . ($index + 1) . " of " . count($chunks) . " of a larger document. ";
+                    $response = $this->makeRequest($contextPrefix . $chunk);
+                    
+                    // Parse response
                     $result = json_decode($response, true);
                     
                     if (json_last_error() === JSON_ERROR_NONE && is_array($result)) {
-                        $summaries[] = $result['summary'] ?? '';
-                        $contents[] = $result['content'] ?? '';
+                        $chunkResults[] = $result;
+                    } else {
+                        // Try to extract content using string manipulation if JSON parsing fails
+                        $result = $this->cleanAndParseGeminiResponse($response);
+                        if (!empty($result)) {
+                            $chunkResults[] = $result;
+                        }
                     }
+                    
+                    // Add delay between chunks to avoid rate limiting
+                    if ($index < count($chunks) - 1) {
+                        sleep(1);
+                    }
+                    
                 } catch (\Exception $e) {
-                    Log::error('Failed to process text chunk: ' . $e->getMessage());
+                    Log::error("Error processing chunk " . ($index + 1) . ": " . $e->getMessage());
                     continue;
                 }
             }
-
-            // If no chunks were processed successfully
-            if (empty($summaries) && empty($contents)) {
-                return [
-                    'summary' => 'Error processing text',
-                    'content' => 'Failed to process the document. Please try again.'
-                ];
-            }
-
-            // Combine the chunks into a final summary
-            $finalPrompt = "Create a unified, detailed set of study notes from these sections. " .
-                          "Make sure to maintain the SAME LANGUAGE as the original text throughout. " .
-                          "Combine them logically and remove any redundancy, but preserve ALL important details. " .
-                          "Focus on maintaining the depth and specificity of the information. " .
-                          "The notes should be detailed enough to generate accurate flashcards and quiz questions. " .
-                          "Do not use markdown or code blocks in your response. " .
-                          "Ensure your entire response is in the SAME LANGUAGE as the original text.\n\n" .
-                          "Summaries:\n" . implode("\n\n", $summaries) . "\n\n" .
-                          "Contents:\n" . implode("\n\n", $contents);
-
-            $finalResponse = $this->makeRequest($finalPrompt);
-            $finalResult = json_decode($finalResponse, true);
             
-            if (json_last_error() === JSON_ERROR_NONE && is_array($finalResult)) {
-                return [
-                    'summary' => trim($finalResult['summary']),
-                    'content' => trim($finalResult['content'])
-                ];
+            if (empty($chunkResults)) {
+                throw new \Exception("Failed to process any chunks successfully");
             }
             
-            // Fallback if final combination fails
+            // Combine results
+            foreach ($chunkResults as $result) {
+                if (isset($result['summary'])) {
+                    $combinedSummary .= $result['summary'] . "\n\n";
+                }
+                if (isset($result['content'])) {
+                    $combinedContent .= $result['content'] . "\n\n";
+                }
+            }
+            
+            // Generate a final summary of all chunks
+            $finalSummaryPrompt = "Please create a cohesive summary of these combined notes:\n\n" . $combinedSummary;
+            $finalSummaryResponse = $this->makeRequest($finalSummaryPrompt);
+            $finalSummary = json_decode($finalSummaryResponse, true);
+            
             return [
-                'summary' => implode("\n\n", $summaries),
-                'content' => implode("\n\n", $contents)
+                'summary' => $finalSummary['summary'] ?? trim($combinedSummary),
+                'content' => trim($combinedContent)
             ];
             
         } catch (\Exception $e) {
-            Log::error('Failed in processLargeText: ' . $e->getMessage());
+            Log::error("Failed to process large text: " . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * Split text into chunks while preserving paragraph integrity
+     * Split text into chunks while preserving paragraph integrity and document structure
      */
     private function splitTextIntoChunks(string $text, int $maxChunkSize): array
     {
         $chunks = [];
-        $paragraphs = explode("\n\n", $text);
+        
+        // Split into sections based on headers or major breaks
+        $sections = preg_split('/(?=\n[A-Z][^\n]+\n={2,}|\n#{1,6}\s|(?:\r?\n){3,})/', $text);
+        
         $currentChunk = '';
-
-        foreach ($paragraphs as $paragraph) {
-            if (strlen($currentChunk) + strlen($paragraph) > $maxChunkSize && !empty($currentChunk)) {
-                $chunks[] = $currentChunk;
-                $currentChunk = '';
+        $currentSize = 0;
+        
+        foreach ($sections as $section) {
+            $sectionSize = strlen($section);
+            
+            // If section alone exceeds max size, split it further
+            if ($sectionSize > $maxChunkSize) {
+                // If we have accumulated content, save it as a chunk
+                if (!empty($currentChunk)) {
+                    $chunks[] = trim($currentChunk);
+                    $currentChunk = '';
+                    $currentSize = 0;
+                }
+                
+                // Split large section into paragraphs
+                $paragraphs = preg_split('/\n\n+/', $section);
+                
+                foreach ($paragraphs as $paragraph) {
+                    $paragraphSize = strlen($paragraph);
+                    
+                    // If single paragraph is too large, split by sentences
+                    if ($paragraphSize > $maxChunkSize) {
+                        $sentences = preg_split('/(?<=[.!?])\s+/', $paragraph);
+                        
+                        foreach ($sentences as $sentence) {
+                            if (strlen($currentChunk) + strlen($sentence) > $maxChunkSize && !empty($currentChunk)) {
+                                $chunks[] = trim($currentChunk);
+                                $currentChunk = '';
+                                $currentSize = 0;
+                            }
+                            $currentChunk .= $sentence . ' ';
+                            $currentSize += strlen($sentence) + 1;
+                        }
+                    } else {
+                        // Handle normal paragraphs
+                        if ($currentSize + $paragraphSize > $maxChunkSize && !empty($currentChunk)) {
+                            $chunks[] = trim($currentChunk);
+                            $currentChunk = '';
+                            $currentSize = 0;
+                        }
+                        $currentChunk .= $paragraph . "\n\n";
+                        $currentSize += $paragraphSize + 2;
+                    }
+                }
+            } else {
+                // Handle normal sections
+                if ($currentSize + $sectionSize > $maxChunkSize && !empty($currentChunk)) {
+                    $chunks[] = trim($currentChunk);
+                    $currentChunk = '';
+                    $currentSize = 0;
+                }
+                $currentChunk .= $section;
+                $currentSize += $sectionSize;
             }
-            $currentChunk .= (empty($currentChunk) ? '' : "\n\n") . $paragraph;
         }
-
+        
+        // Add any remaining content
         if (!empty($currentChunk)) {
-            $chunks[] = $currentChunk;
+            $chunks[] = trim($currentChunk);
         }
-
-        return $chunks;
+        
+        // Ensure no empty chunks
+        return array_filter($chunks, function($chunk) {
+            return !empty(trim($chunk));
+        });
     }
 
     /**
@@ -530,7 +579,17 @@ class AIService
      */
     private function estimateTokenCount(string $text): int
     {
-        return (int)(strlen($text) * self::ESTIMATED_TOKENS_PER_CHAR);
+        // Count words (more accurate than character count)
+        $wordCount = str_word_count($text);
+        
+        // Average of 1.3 tokens per word (conservative estimate)
+        $estimatedTokens = (int)($wordCount * 1.3);
+        
+        // Also consider character-based estimate as a fallback
+        $charBasedEstimate = (int)(strlen($text) * self::ESTIMATED_TOKENS_PER_CHAR);
+        
+        // Use the larger estimate to be safe
+        return max($estimatedTokens, $charBasedEstimate);
     }
 
     /**
