@@ -12,6 +12,7 @@ class Quiz extends Model
         'document_id',
         'title',
         'type',
+        'difficulty',
         'total_questions',
     ];
 
@@ -22,6 +23,15 @@ class Quiz extends Model
      */
     protected $casts = [
         'total_questions' => 'integer',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array<string, string>
+     */
+    protected $attributes = [
+        'difficulty' => 'medium',
     ];
 
     /**
@@ -38,5 +48,13 @@ class Quiz extends Model
     public function questions(): HasMany
     {
         return $this->hasMany(QuizQuestion::class);
+    }
+
+    /**
+     * Get the available difficulty levels.
+     */
+    public static function getDifficultyLevels(): array
+    {
+        return ['easy', 'medium', 'hard'];
     }
 } 

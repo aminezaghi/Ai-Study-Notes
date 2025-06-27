@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Models\Quiz;
-use App\Services\AIService;
+use App\Services\QuizService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +14,7 @@ class QuizController extends Controller
 {
     protected $aiService;
 
-    public function __construct(AIService $aiService)
+    public function __construct(QuizService $aiService)
     {
         $this->aiService = $aiService;
         // Add middleware to check document ownership for all methods
@@ -57,7 +57,8 @@ class QuizController extends Controller
             ]);
 
             return response()->json([
-                'quizzes' => $quizzes
+                'quizzes' => $quizzes,
+                'available_difficulties' => Quiz::getDifficultyLevels()
             ]);
 
         } catch (\Exception $e) {
@@ -83,7 +84,8 @@ class QuizController extends Controller
         $request->validate([
             'type' => 'required|in:multiple_choice,true_false,fill_in_blanks',
             'title' => 'required|string|max:255',
-            'num_questions' => 'required|integer|min:1|max:50'
+            'num_questions' => 'required|integer|min:1|max:50',
+            'difficulty' => 'required|in:easy,medium,hard'
         ]);
 
         try {
@@ -100,7 +102,9 @@ class QuizController extends Controller
             $combinedContent = $studyNotes->pluck('content')->join("\n\n");
             
             // Log the length of text being sent to AI
-            Log::info('Generating quiz from text length: ' . strlen($combinedContent));
+            Log::info('Generating quiz from text length: ' . strlen($combinedContent), [
+                'difficulty' => $request->difficulty
+            ]);
 
             DB::beginTransaction();
 
@@ -108,6 +112,7 @@ class QuizController extends Controller
             $quiz = $document->quizzes()->create([
                 'title' => $request->title,
                 'type' => $request->type,
+                'difficulty' => $request->difficulty,
                 'total_questions' => $request->num_questions
             ]);
 
@@ -115,7 +120,8 @@ class QuizController extends Controller
             $response = $this->aiService->generateQuizQuestions(
                 $combinedContent,
                 $request->type,
-                $request->num_questions
+                $request->num_questions,
+                $request->difficulty
             );
 
             // Check if we got a successful response
@@ -123,7 +129,8 @@ class QuizController extends Controller
                 DB::rollBack();
                 Log::error('Failed to generate quiz:', [
                     'error' => $response['error'] ?? 'Unknown error',
-                    'success' => $response['success'] ?? false
+                    'success' => $response['success'] ?? false,
+                    'difficulty' => $request->difficulty
                 ]);
                 
                 return response()->json([
@@ -133,7 +140,9 @@ class QuizController extends Controller
             
             if (empty($response['questions'])) {
                 DB::rollBack();
-                Log::error('No questions returned from AI service');
+                Log::error('No questions returned from AI service', [
+                    'difficulty' => $request->difficulty
+                ]);
                 return response()->json([
                     'message' => 'No questions were generated. Please try again.'
                 ], 500);
@@ -159,7 +168,8 @@ class QuizController extends Controller
             // Log success
             Log::info('Successfully created quiz:', [
                 'quiz_id' => $quiz->id,
-                'question_count' => $quiz->questions->count()
+                'question_count' => $quiz->questions->count(),
+                'difficulty' => $quiz->difficulty
             ]);
 
             return response()->json([
@@ -169,7 +179,9 @@ class QuizController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Quiz generation failed: ' . $e->getMessage());
+            Log::error('Quiz generation failed: ' . $e->getMessage(), [
+                'difficulty' => $request->difficulty ?? 'unknown'
+            ]);
 
             return response()->json([
                 'message' => 'Failed to generate quiz: ' . $e->getMessage()

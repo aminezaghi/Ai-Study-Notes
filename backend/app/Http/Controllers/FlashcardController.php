@@ -4,16 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Models\Flashcard;
-use App\Services\AIService;
+use App\Services\FlashcardsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class FlashcardController extends Controller
 {
-    private AIService $aiService;
+    private FlashcardsService $aiService;
 
-    public function __construct(AIService $aiService)
+    public function __construct(FlashcardsService $aiService)
     {
         $this->aiService = $aiService;
         // Add middleware to check document ownership for all methods

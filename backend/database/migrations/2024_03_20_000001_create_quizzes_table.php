@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->enum('type', ['multiple_choice', 'true_false', 'fill_in_blanks']);
+            $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('medium');
             $table->integer('total_questions');
             $table->timestamps();
         });
