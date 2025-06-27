@@ -7,6 +7,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\StudyNoteController;
 use App\Http\Controllers\FlashcardController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\EnhancedStudyNoteController;
 
 // Public routes
 Route::post('register', [AuthController::class, 'register']);
@@ -24,6 +25,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Study Notes
     Route::get('/documents/{document}/notes', [StudyNoteController::class, 'index']);
     Route::post('/documents/{document}/notes/generate', [StudyNoteController::class, 'generate']);
+
+    // Enhanced Study Notes
+    Route::get('/documents/{document}/enhanced-notes', [EnhancedStudyNoteController::class, 'index']);
+    Route::post('/documents/{document}/enhanced-notes/generate', [EnhancedStudyNoteController::class, 'generate']);
+    Route::get('/documents/{document}/enhanced-notes/{enhancedNote}', [EnhancedStudyNoteController::class, 'show']);
+    Route::delete('/documents/{document}/enhanced-notes/{enhancedNote}', [EnhancedStudyNoteController::class, 'destroy']);
 
     // Flashcards
     Route::get('/documents/{document}/flashcards', [FlashcardController::class, 'index']);

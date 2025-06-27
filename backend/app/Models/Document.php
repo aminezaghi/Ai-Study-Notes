@@ -40,6 +40,14 @@ class Document extends Model
     }
 
     /**
+     * Get the enhanced study notes for the document.
+     */
+    public function enhancedStudyNotes(): HasMany
+    {
+        return $this->hasMany(EnhancedStudyNote::class)->orderBy('order');
+    }
+
+    /**
      * Get the flashcards for the document.
      */
     public function flashcards(): HasMany
