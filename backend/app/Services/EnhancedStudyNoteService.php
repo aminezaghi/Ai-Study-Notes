@@ -37,7 +37,9 @@ class EnhancedStudyNoteService
     {
         $prompt = "You are an expert study notes enhancer. Your task is to take the following study note content " .
                  "and create an enhanced version with key points, definitions, examples, and checkpoint questions. " .
-                 "First, detect the language of the provided text and ensure all your responses are in that SAME language. " .
+                 "First, detect the language of the provided text and ensure all your responses are in that SAME language.\n\n" .
+                 "IMPORTANT: Your response MUST be relevant to the section title: \"" . $sectionTitle . "\". " .
+                 "If the content doesn't match the section title, focus on the relevant parts or indicate a mismatch.\n\n" .
                  "Format your response exactly as shown in this example (but in the SAME LANGUAGE as the input):\n\n" .
                  "{\n" .
                  "  \"key_points\": [\n" .
@@ -51,35 +53,42 @@ class EnhancedStudyNoteService
                  "  },\n" .
                  "  \"examples\": [\n" .
                  "    {\n" .
-                 "      \"title\": \"Example 1 Title\",\n" .
-                 "      \"description\": \"Detailed explanation\"\n" .
+                 "      \"title\": \"Real-world Example\",\n" .
+                 "      \"description\": \"A practical, real-world scenario showing the concept in action\"\n" .
                  "    },\n" .
                  "    {\n" .
-                 "      \"title\": \"Example 2 Title\",\n" .
-                 "      \"description\": \"Detailed explanation\"\n" .
+                 "      \"title\": \"Code Example (if applicable)\",\n" .
+                 "      \"description\": \"Clean, well-formatted code without print statements or unnecessary comments\"\n" .
                  "    }\n" .
                  "  ],\n" .
                  "  \"questions\": [\n" .
                  "    {\n" .
                  "      \"type\": \"mcq\",\n" .
-                 "      \"question\": \"Clear question text?\",\n" .
-                 "      \"choices\": [\"Choice 1\", \"Choice 2\", \"Choice 3\"],\n" .
+                 "      \"question\": \"A thought-provoking question that tests understanding?\",\n" .
+                 "      \"choices\": [\"Choice 1\", \"Choice 2\", \"Choice 3\", \"Choice 4\"],\n" .
                  "      \"correct_answer\": \"Choice 2\"\n" .
                  "    },\n" .
                  "    {\n" .
                  "      \"type\": \"fill\",\n" .
-                 "      \"question\": \"Complete this statement: ___\",\n" .
-                 "      \"correct_answer\": \"answer\"\n" .
+                 "      \"question\": \"Complete this statement about a key concept: ___\",\n" .
+                 "      \"correct_answer\": \"precise answer\"\n" .
+                 "    },\n" .
+                 "    {\n" .
+                 "      \"type\": \"short\",\n" .
+                 "      \"question\": \"A question requiring a short explanation\",\n" .
+                 "      \"correct_answer\": \"A brief but complete answer showing understanding\"\n" .
                  "    }\n" .
                  "  ]\n" .
                  "}\n\n" .
                  "IMPORTANT GUIDELINES:\n" .
                  "1. Generate 3-5 key points that capture the main concepts\n" .
                  "2. Include 2-4 important definitions\n" .
-                 "3. Provide 1-2 practical examples\n" .
-                 "4. Create 2 checkpoint questions (mix of MCQ and fill-in-the-blank)\n" .
+                 "3. Provide 2 examples: one real-world application and one technical example (if applicable)\n" .
+                 "4. Create 3 different types of questions (MCQ, fill-in-blank, and short answer)\n" .
                  "5. Keep all content in the SAME LANGUAGE as the input text\n" .
-                 "6. Make sure all content is clear, accurate, and educational\n\n" .
+                 "6. Make sure all content is clear, accurate, and educational\n" .
+                 "7. For code examples: remove language tags, print statements, and unnecessary comments\n" .
+                 "8. Ensure all content is relevant to the section title\n\n" .
                  "Here is the study note content to enhance:\n\n" . $studyNote->content;
 
         try {
@@ -89,6 +98,14 @@ class EnhancedStudyNoteService
             if (json_last_error() !== JSON_ERROR_NONE || !$this->validateResponse($result)) {
                 Log::warning('Invalid JSON response from AI service: ' . $response);
                 throw new \Exception('Invalid response format from AI service');
+            }
+
+            // Clean up code examples
+            foreach ($result['examples'] as &$example) {
+                // Remove language tags and print statements
+                $example['description'] = preg_replace('/^(python|javascript|php|java)\n/i', '', $example['description']);
+                $example['description'] = preg_replace('/\s*print\([^)]*\)\s*#.*$/m', '', $example['description']);
+                $example['description'] = trim($example['description']);
             }
             
             // Create the enhanced study note
@@ -102,6 +119,7 @@ class EnhancedStudyNoteService
             ]);
 
             // Create the checkpoint questions
+            $order = 0;
             foreach ($result['questions'] as $questionData) {
                 NoteQuestion::create([
                     'enhanced_note_id' => $enhancedNote->id,
@@ -109,12 +127,12 @@ class EnhancedStudyNoteService
                     'question' => $questionData['question'],
                     'choices' => isset($questionData['choices']) ? $questionData['choices'] : null,
                     'correct_answer' => $questionData['correct_answer'],
-                    'order' => 0 // You might want to handle order differently
+                    'order' => $order++
                 ]);
             }
 
             return [
-                'enhanced_note' => $enhancedNote,
+                'enhanced_note' => $enhancedNote->load('questions'),
                 'questions' => $enhancedNote->questions
             ];
 
@@ -129,14 +147,37 @@ class EnhancedStudyNoteService
      */
     private function validateResponse(array $response): bool
     {
-        return isset($response['key_points']) && is_array($response['key_points'])
-            && isset($response['definitions']) && is_array($response['definitions'])
-            && isset($response['examples']) && is_array($response['examples'])
-            && isset($response['questions']) && is_array($response['questions'])
-            && count($response['key_points']) >= 3
-            && count($response['definitions']) >= 2
-            && count($response['examples']) >= 1
-            && count($response['questions']) >= 2;
+        // Basic structure validation
+        if (!isset($response['key_points']) || !is_array($response['key_points']) ||
+            !isset($response['definitions']) || !is_array($response['definitions']) ||
+            !isset($response['examples']) || !is_array($response['examples']) ||
+            !isset($response['questions']) || !is_array($response['questions'])) {
+            return false;
+        }
+
+        // Content requirements validation
+        if (count($response['key_points']) < 3 || count($response['key_points']) > 5 ||
+            count($response['definitions']) < 2 || count($response['definitions']) > 4 ||
+            count($response['examples']) < 1 || count($response['examples']) > 2 ||
+            count($response['questions']) < 2) {
+            return false;
+        }
+
+        // Question types validation
+        $questionTypes = array_column($response['questions'], 'type');
+        if (!in_array('mcq', $questionTypes) || !in_array('fill', $questionTypes)) {
+            return false;
+        }
+
+        // Examples validation
+        foreach ($response['examples'] as $example) {
+            if (!isset($example['title']) || !isset($example['description']) ||
+                empty($example['title']) || empty($example['description'])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
