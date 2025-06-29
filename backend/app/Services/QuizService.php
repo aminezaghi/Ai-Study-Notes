@@ -179,7 +179,7 @@ class QuizService
     /**
      * Generate quiz questions from text
      */
-    public function generateQuizQuestions(string $text, string $type, int $numQuestions): array
+    public function generateQuizQuestions(string $text, string $type, int $numQuestions, string $difficulty = 'medium'): array
     {
         try {
             // Estimate tokens in the text
@@ -187,10 +187,10 @@ class QuizService
             
             if ($estimatedTokens > self::MAX_TOKENS_PER_REQUEST) {
                 // Split text and process in chunks
-                return $this->processLargeTextForQuiz($text, $type, $numQuestions);
+                return $this->processLargeTextForQuiz($text, $type, $numQuestions, $difficulty);
             }
 
-            $prompt = $this->getQuizPrompt($text, $type, $numQuestions);
+            $prompt = $this->getQuizPrompt($text, $type, $numQuestions, $difficulty);
             
             $response = $this->makeQuizRequest($prompt);
             $questions = json_decode($response, true);
@@ -277,7 +277,7 @@ class QuizService
     /**
      * Process large text for quiz generation by splitting it into chunks
      */
-    private function processLargeTextForQuiz(string $text, string $type, int $numQuestions): array
+    private function processLargeTextForQuiz(string $text, string $type, int $numQuestions, string $difficulty = 'medium'): array
     {
         try {
             // Calculate chunk size based on token limit
@@ -289,7 +289,7 @@ class QuizService
             
             foreach ($chunks as $index => $chunk) {
                 try {
-                    $prompt = $this->getQuizPrompt($chunk, $type, $questionsPerChunk);
+                    $prompt = $this->getQuizPrompt($chunk, $type, $questionsPerChunk, $difficulty);
                     $response = $this->makeQuizRequest($prompt);
                     
                     try {
@@ -359,11 +359,58 @@ class QuizService
     }
 
     /**
-     * Get the appropriate prompt for quiz generation based on question type
+     * Get the appropriate prompt for quiz generation based on question type and difficulty
      */
-    private function getQuizPrompt(string $text, string $type, int $numQuestions): string
+    private function getQuizPrompt(string $text, string $type, int $numQuestions, string $difficulty = 'medium'): string
     {
-        $basePrompt = "You are a specialized quiz generator AI. Your task is to create educational quiz questions from the provided text.\n\n" .
+        $basePrompt = "You are a specialized quiz generator AI focused on testing understanding of core concepts and key knowledge. " .
+                     "Your task is to create educational quiz questions from the provided text content.\n\n" .
+                     "DIFFICULTY LEVEL: " . strtoupper($difficulty) . "\n" .
+                     "For " . strtoupper($difficulty) . " difficulty:\n";
+
+        // Add difficulty-specific instructions
+        switch ($difficulty) {
+            case 'easy':
+                $basePrompt .= "- Focus on basic understanding and recall of main concepts\n" .
+                              "- Use straightforward language\n" .
+                              "- Test fundamental definitions and basic principles\n" .
+                              "- Include clear, direct questions\n" .
+                              "- Avoid complex scenarios or advanced applications\n";
+                break;
+            case 'medium':
+                $basePrompt .= "- Test understanding of concepts and their relationships\n" .
+                              "- Include some application of knowledge\n" .
+                              "- Mix basic and advanced concepts\n" .
+                              "- Use moderate complexity in scenarios\n" .
+                              "- Test ability to connect different ideas\n";
+                break;
+            case 'hard':
+                $basePrompt .= "- Focus on deep understanding and analysis\n" .
+                              "- Test application in complex scenarios\n" .
+                              "- Include advanced concepts and their interactions\n" .
+                              "- Require critical thinking and problem-solving\n" .
+                              "- Test ability to synthesize multiple concepts\n";
+                break;
+        }
+
+        $basePrompt .= "\nCRITICAL RULES FOR QUESTION CONTENT:\n" .
+                     "1. NEVER ask about metadata like:\n" .
+                     "   - Document authors, dates, versions\n" .
+                     "   - Document formatting or structure\n" .
+                     "   - Software versions or requirements\n" .
+                     "   - Licensing information\n" .
+                     "2. FOCUS ONLY on:\n" .
+                     "   - Core concepts and principles\n" .
+                     "   - Technical definitions and terminology\n" .
+                     "   - Problem-solving approaches\n" .
+                     "   - Practical applications\n" .
+                     "   - Cause-effect relationships\n" .
+                     "   - Key theories and methodologies\n" .
+                     "3. Questions should test:\n" .
+                     "   - Deep understanding of concepts\n" .
+                     "   - Application of knowledge\n" .
+                     "   - Critical thinking\n" .
+                     "   - Problem-solving ability\n\n" .
                      "RESPONSE FORMAT:\n" .
                      "You must respond with ONLY a JSON array of question objects. Each object must have these fields:\n" .
                      "1. \"question\": A clear, focused question\n" .
@@ -376,10 +423,10 @@ class QuizService
                               "Example format:\n" .
                               "[\n" .
                               "  {\n" .
-                              "    \"question\": \"What is the capital of France?\",\n" .
-                              "    \"options\": [\"Paris\", \"London\", \"Berlin\", \"Madrid\"],\n" .
-                              "    \"correct_answer\": \"Paris\",\n" .
-                              "    \"explanation\": \"Paris has been the capital of France since 508 CE.\"\n" .
+                              "    \"question\": \"Which fundamental principle explains how neural networks learn from data?\",\n" .
+                              "    \"options\": [\"Backpropagation\", \"Random selection\", \"Data storage\", \"Manual coding\"],\n" .
+                              "    \"correct_answer\": \"Backpropagation\",\n" .
+                              "    \"explanation\": \"Backpropagation is the core algorithm that allows neural networks to learn by adjusting weights based on the error gradient.\"\n" .
                               "  }\n" .
                               "]\n\n";
                 break;
@@ -388,19 +435,14 @@ class QuizService
                 $basePrompt .= "\nIMPORTANT RULES FOR TRUE/FALSE QUESTIONS:\n" .
                               "1. The question MUST be a statement that can be clearly true or false\n" .
                               "2. The correct_answer MUST be EXACTLY either \"true\" or \"false\" (lowercase)\n" .
-                              "3. Make statements clear and unambiguous\n" .
+                              "3. Focus on testing understanding of core concepts\n" .
                               "4. Avoid using absolute words like 'always', 'never', 'all', 'none'\n\n" .
                               "Example format:\n" .
                               "[\n" .
                               "  {\n" .
-                              "    \"question\": \"The Earth orbits around the Sun.\",\n" .
+                              "    \"question\": \"Gradient descent is an optimization algorithm used to minimize the loss function in machine learning.\",\n" .
                               "    \"correct_answer\": \"true\",\n" .
-                              "    \"explanation\": \"The Earth follows an elliptical orbit around the Sun, completing one revolution every 365.25 days.\"\n" .
-                              "  },\n" .
-                              "  {\n" .
-                              "    \"question\": \"The Moon is larger than the Earth.\",\n" .
-                              "    \"correct_answer\": \"false\",\n" .
-                              "    \"explanation\": \"The Moon is about one-quarter the size of Earth in diameter.\"\n" .
+                              "    \"explanation\": \"Gradient descent iteratively adjusts parameters to find the minimum of the loss function, optimizing the model's performance.\"\n" .
                               "  }\n" .
                               "]\n\n";
                 break;
@@ -409,20 +451,15 @@ class QuizService
                 $basePrompt .= "\nIMPORTANT RULES FOR FILL-IN-THE-BLANKS QUESTIONS:\n" .
                               "1. The question MUST be a complete sentence with _____ (5 underscores) where the blank should be\n" .
                               "2. Use exactly ONE blank per question\n" .
-                              "3. The correct_answer should be a single word or short phrase that fits in the blank\n" .
-                              "4. The answer should be obvious when looking at the original text\n" .
+                              "3. The blank should test understanding of key concepts\n" .
+                              "4. The answer should be clearly derivable from the content\n" .
                               "5. The blank should not be at the beginning or end of the sentence\n\n" .
                               "Example format:\n" .
                               "[\n" .
                               "  {\n" .
-                              "    \"question\": \"The process of converting sunlight into chemical energy in plants is called _____.\",\n" .
-                              "    \"correct_answer\": \"photosynthesis\",\n" .
-                              "    \"explanation\": \"Photosynthesis is the biological process that allows plants to create energy from sunlight.\"\n" .
-                              "  },\n" .
-                              "  {\n" .
-                              "    \"question\": \"Water consists of two _____ atoms bonded to one oxygen atom.\",\n" .
-                              "    \"correct_answer\": \"hydrogen\",\n" .
-                              "    \"explanation\": \"The chemical formula for water is H2O, where H represents hydrogen and O represents oxygen.\"\n" .
+                              "    \"question\": \"In supervised learning, the model learns to make predictions by analyzing _____ data, where the correct outputs are known.\",\n" .
+                              "    \"correct_answer\": \"labeled\",\n" .
+                              "    \"explanation\": \"Supervised learning requires labeled data where both inputs and correct outputs are provided for training.\"\n" .
                               "  }\n" .
                               "]\n\n";
                 break;
@@ -431,10 +468,10 @@ class QuizService
         $basePrompt .= "IMPORTANT RULES:\n" .
                       "1. Create exactly {$numQuestions} high-quality questions\n" .
                       "2. Keep the same language as the input text\n" .
-                      "3. Focus on key concepts and important details\n" .
+                      "3. Focus ONLY on testing understanding of core concepts\n" .
                       "4. Make questions clear and unambiguous\n" .
                       "5. Ensure all answers are factually correct\n" .
-                      "6. Include helpful explanations\n" .
+                      "6. Include helpful explanations that reinforce learning\n" .
                       "7. DO NOT include any explanatory text outside the JSON array\n" .
                       "8. Ensure the response is valid JSON\n\n" .
                       "TEXT TO PROCESS:\n\n" . $text;
