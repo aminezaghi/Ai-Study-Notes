@@ -97,10 +97,8 @@ class EnhancedStudyNoteController extends Controller
             // Set PHP execution time limit to 5 minutes for this request
             set_time_limit(300);
 
-            // Validate request
-            $validated = $request->validate([
-                'section_title' => 'required|string|max:255'
-            ]);
+            // Delete existing enhanced notes if any
+            $document->enhancedStudyNotes()->delete();
 
             // Get the document's study note
             $studyNote = $document->studyNotes()->first();
@@ -127,21 +125,14 @@ class EnhancedStudyNoteController extends Controller
             }
 
             try {
-                // Delete existing enhanced notes for this section if any
-                $document->enhancedStudyNotes()
-                    ->where('section_title', $request->section_title)
-                    ->delete();
-
                 // Generate enhanced study notes using AI
-                $response = $this->enhancedNoteService->generateEnhancedNotes(
-                    $studyNote,
-                    $request->section_title
-                );
+                $response = $this->enhancedNoteService->generateEnhancedNotes($studyNote);
 
                 Log::info('Enhanced study notes generated successfully', [
                     'document_id' => $document->id,
                     'study_note_id' => $studyNote->id,
-                    'enhanced_note_id' => $response['enhanced_note']->id
+                    'enhanced_note_id' => $response['enhanced_note']->id,
+                    'section_title' => $response['enhanced_note']->section_title
                 ]);
 
                 return response()->json([
@@ -182,12 +173,6 @@ class EnhancedStudyNoteController extends Controller
                 ], 500);
             }
 
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Invalid input data',
-                'error' => 'validation_error',
-                'details' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             Log::error('Unexpected error in generate method', [
                 'document_id' => $document->id,

@@ -33,17 +33,16 @@ class EnhancedStudyNoteService
     /**
      * Generate enhanced study notes from a study note's content
      */
-    public function generateEnhancedNotes(StudyNote $studyNote, string $sectionTitle): array
+    public function generateEnhancedNotes(StudyNote $studyNote): array
     {
         $prompt = "You are an expert study notes enhancer with deep analytical capabilities. Your task is to take the following study note content " .
                  "and create a comprehensive, detailed enhanced version with extensive key points, thorough definitions, detailed examples, and thought-provoking questions. " .
                  "First, detect the language of the provided text and ensure all your responses are in that SAME language.\n\n" .
                  "CRITICAL: Your response MUST be a SINGLE, VALID JSON object. Do not include any text before or after the JSON. " .
                  "Do not use markdown formatting or code blocks. The JSON object must match the exact structure shown below.\n\n" .
-                 "IMPORTANT: Your response MUST be relevant to the section title: \"" . $sectionTitle . "\". " .
-                 "If the content doesn't match the section title, focus on the relevant parts or indicate a mismatch.\n\n" .
                  "Your response must follow this EXACT structure:\n\n" .
                  "{\n" .
+                 "  \"section_title\": \"A clear, concise title that accurately represents the main topic or theme of this content\",\n" .
                  "  \"key_points\": [\n" .
                  "    \"Detailed point 1 with thorough explanation, including context, significance, and implications\",\n" .
                  "    \"Detailed point 2 with thorough explanation, including context, significance, and implications\",\n" .
@@ -51,9 +50,9 @@ class EnhancedStudyNoteService
                  "    \"Detailed point 4 with thorough explanation, including context, significance, and implications\"\n" .
                  "  ],\n" .
                  "  \"definitions\": {\n" .
-                 "    \"Term 1\": \"Comprehensive definition including etymology, context, and practical usage\",\n" .
-                 "    \"Term 2\": \"Comprehensive definition including etymology, context, and practical usage\",\n" .
-                 "    \"Term 3\": \"Comprehensive definition including etymology, context, and practical usage\"\n" .
+                 "    \"Term 1\": \"Comprehensive definition including context and practical usage\",\n" .
+                 "    \"Term 2\": \"Comprehensive definition including context and practical usage\",\n" .
+                 "    \"Term 3\": \"Comprehensive definition including context and practical usage\"\n" .
                  "  },\n" .
                  "  \"examples\": [\n" .
                  "    {\n" .
@@ -85,13 +84,13 @@ class EnhancedStudyNoteService
                  "  ]\n" .
                  "}\n\n" .
                  "IMPORTANT GUIDELINES:\n" .
-                 "1. Generate 4-6 detailed key points\n" .
-                 "2. Include 3-5 comprehensive definitions\n" .
-                 "3. Provide 2 detailed examples\n" .
-                 "4. Create 3 questions (must include MCQ, fill-in-blank, and short answer)\n" .
-                 "5. Keep all content in the SAME LANGUAGE as the input text\n" .
-                 "6. Make all content clear, accurate, and educational\n" .
-                 "7. Ensure all content is relevant to the section title\n" .
+                 "1. Generate a clear, descriptive section title that captures the main topic\n" .
+                 "2. Generate 4-6 detailed key points\n" .
+                 "3. Include 3-5 comprehensive definitions\n" .
+                 "4. Provide 2 detailed examples\n" .
+                 "5. Create 3 questions (must include MCQ, fill-in-blank, and short answer)\n" .
+                 "6. Keep all content in the SAME LANGUAGE as the input text\n" .
+                 "7. Make all content clear, accurate, and educational\n" .
                  "8. CRITICAL: Return ONLY the JSON object, no other text\n\n" .
                  "Here is the study note content to enhance:\n\n" . $studyNote->content;
 
@@ -107,7 +106,7 @@ class EnhancedStudyNoteService
             // Create the enhanced study note
             $enhancedNote = EnhancedStudyNote::create([
                 'document_id' => $studyNote->document_id,
-                'section_title' => $sectionTitle,
+                'section_title' => $result['section_title'],
                 'key_points' => $result['key_points'],
                 'definitions' => $result['definitions'],
                 'examples' => $result['examples'],
@@ -145,11 +144,13 @@ class EnhancedStudyNoteService
     {
         try {
             // Basic structure validation
-            if (!isset($response['key_points']) || !is_array($response['key_points']) ||
+            if (!isset($response['section_title']) || !is_string($response['section_title']) ||
+                !isset($response['key_points']) || !is_array($response['key_points']) ||
                 !isset($response['definitions']) || !is_array($response['definitions']) ||
                 !isset($response['examples']) || !is_array($response['examples']) ||
                 !isset($response['questions']) || !is_array($response['questions'])) {
                 Log::warning('Missing required fields in response', [
+                    'has_section_title' => isset($response['section_title']),
                     'has_key_points' => isset($response['key_points']),
                     'has_definitions' => isset($response['definitions']),
                     'has_examples' => isset($response['examples']),
