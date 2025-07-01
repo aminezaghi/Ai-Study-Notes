@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('note_questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('enhanced_note_id')->constrained('enhanced_study_notes')->onDelete('cascade');
-            $table->enum('type', ['mcq', 'fill', 'short']);
+            $table->enum('type', ['mcq', 'fill_blank', 'short_answer']);
             $table->text('question');
             $table->json('choices')->nullable();
             $table->string('correct_answer');

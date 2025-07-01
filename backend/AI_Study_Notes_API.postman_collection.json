@@ -1460,7 +1460,7 @@
 								"enhanced-notes"
 							]
 						},
-						"description": "Get all enhanced study notes for a document"
+						"description": "Get all enhanced study notes for a document. Each note is structured as a mini-course section with comprehensive learning materials."
 					},
 					"response": [
 						{
@@ -1482,7 +1482,28 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"enhanced_notes\": [\n        {\n            \"id\": 1,\n            \"document_id\": 1,\n            \"section_title\": \"Introduction to Machine Learning\",\n            \"key_points\": [\"Point 1\", \"Point 2\", \"Point 3\"],\n            \"definitions\": {\"Term 1\": \"Definition 1\", \"Term 2\": \"Definition 2\"},\n            \"examples\": [{\"title\": \"Example 1\", \"description\": \"Description 1\"}],\n            \"order\": 0,\n            \"created_at\": \"2024-03-21T12:00:00.000000Z\",\n            \"updated_at\": \"2024-03-21T12:00:00.000000Z\",\n            \"questions\": [\n                {\n                    \"id\": 1,\n                    \"enhanced_note_id\": 1,\n                    \"type\": \"mcq\",\n                    \"question\": \"What is machine learning?\",\n                    \"choices\": [\"Option 1\", \"Option 2\", \"Option 3\"],\n                    \"correct_answer\": \"Option 2\",\n                    \"order\": 0\n                }\n            ]\n        }\n    ]\n}"
+							"body": "{\n    \"enhanced_notes\": [\n        {\n            \"id\": 1,\n            \"document_id\": 1,\n            \"section_title\": \"Introduction to Neural Networks: Building Blocks of Deep Learning\",\n            \"lesson_intro\": \"Neural networks form the backbone of modern artificial intelligence, enabling computers to recognize patterns much like the human brain. In this section, we'll explore the fundamental concepts behind neural networks and understand how they process information. This knowledge is essential for anyone interested in machine learning and AI applications.\",\n            \"key_points\": [\n                \"Network Architecture: Neural networks consist of interconnected layers of neurons. Each layer processes information in a specific way, with input layers receiving data, hidden layers performing computations, and output layers producing results.\",\n                \"Learning Process: Through backpropagation, neural networks adjust their internal weights based on training data, gradually improving their accuracy in pattern recognition tasks.\",\n                \"Activation Functions: These mathematical functions determine how neurons process and transmit information, with common types including ReLU, sigmoid, and tanh functions.\"\n            ],\n            \"definitions\": {\n                \"Neuron\": \"The basic computational unit of a neural network, inspired by biological neurons. It receives inputs, applies weights and biases, and produces an output through an activation function.\",\n                \"Backpropagation\": \"A training algorithm that calculates the gradient of the error function with respect to the network weights, enabling the network to learn from its mistakes and improve accuracy.\"\n            },\n            \"examples\": [\n                {\n                    \"title\": \"Image Recognition in Healthcare\",\n                    \"description\": \"In medical imaging, neural networks help detect abnormalities in X-rays. For example, a convolutional neural network (CNN) processes a chest X-ray image through multiple layers: first identifying basic patterns like edges, then combining these into more complex features like tissue textures, and finally recognizing potential tumors or lesions.\"\n                }\n            ],\n            \"section_summary\": \"Neural networks represent a powerful approach to machine learning, mimicking the human brain's structure to process and learn from data. Through carefully designed architectures and training processes, these networks can recognize complex patterns and make intelligent decisions. Understanding these fundamentals provides a strong foundation for exploring more advanced AI applications.\",\n            \"next_topic\": \"Training Neural Networks: Optimization Techniques and Best Practices\",\n            \"task\": \"Design a simple neural network architecture for a specific problem: Choose between image classification, sentiment analysis, or price prediction. Sketch the network layers, specify the number of neurons in each layer, and explain why you chose this structure. Compare your design with existing solutions online.\",\n            \"order\": 0,\n            \"created_at\": \"2024-03-21T12:00:00.000000Z\",\n            \"updated_at\": \"2024-03-21T12:00:00.000000Z\",\n            \"questions\": [\n                {\n                    \"id\": 1,\n                    \"enhanced_note_id\": 1,\n                    \"type\": \"mcq\",\n                    \"question\": \"Which component of a neural network is primarily responsible for introducing non-linearity into the model?\",\n                    \"choices\": [\n                        \"Activation functions\",\n                        \"Weight matrices\",\n                        \"Input layers\",\n                        \"Bias terms\"\n                    ],\n                    \"correct_answer\": \"Activation functions\",\n                    \"explanation\": \"Activation functions introduce non-linearity into neural networks, allowing them to learn complex patterns. Without activation functions, the network would only be capable of learning linear relationships.\",\n                    \"order\": 0\n                },\n                {\n                    \"id\": 2,\n                    \"enhanced_note_id\": 1,\n                    \"type\": \"fill_blank\",\n                    \"question\": \"The process of adjusting weights based on the error gradient is called _____.\",\n                    \"correct_answer\": \"backpropagation\",\n                    \"explanation\": \"Backpropagation is the fundamental algorithm that allows neural networks to learn from their mistakes by adjusting weights based on the calculated error gradient.\",\n                    \"order\": 1\n                }\n            ]\n        }\n    ]\n}"
+						},
+						{
+							"name": "Database Error",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/documents/{{document_id}}/enhanced-notes"
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Error fetching enhanced notes\",\n    \"error\": \"database_error\",\n    \"details\": \"Table 'ainotes.enhanced_study_note_questions' doesn't exist\"\n}"
 						}
 					]
 				},
@@ -1524,7 +1545,7 @@
 								"generate"
 							]
 						},
-						"description": "Generate enhanced study notes from the document's study note. If an enhanced note already exists, it will be automatically deleted and a new one will be generated. The section title will be automatically generated based on the content."
+						"description": "Generate enhanced study notes from the document's study note. If an enhanced note already exists, it will be automatically deleted and a new one will be generated. The content is structured as a comprehensive mini-course section with lesson introduction, key points, definitions, examples, interactive questions, and more."
 					},
 					"response": [
 						{
@@ -1550,7 +1571,82 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"message\": \"Enhanced study notes generated successfully\",\n    \"enhanced_note\": {\n        \"id\": 1,\n        \"document_id\": 1,\n        \"section_title\": \"Introduction to Machine Learning\",\n        \"key_points\": [\"Point 1\", \"Point 2\", \"Point 3\"],\n        \"definitions\": {\"Term 1\": \"Definition 1\", \"Term 2\": \"Definition 2\"},\n        \"examples\": [{\"title\": \"Example 1\", \"description\": \"Description 1\"}],\n        \"order\": 0,\n        \"created_at\": \"2024-03-21T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-21T12:00:00.000000Z\"\n    },\n    \"questions\": [\n        {\n            \"id\": 1,\n            \"enhanced_note_id\": 1,\n            \"type\": \"mcq\",\n            \"question\": \"What is machine learning?\",\n            \"choices\": [\"Option 1\", \"Option 2\", \"Option 3\"],\n            \"correct_answer\": \"Option 2\",\n            \"order\": 0\n        }\n    ]\n}"
+							"body": "{\n    \"message\": \"Enhanced study notes generated successfully\",\n    \"enhanced_note\": {\n        \"id\": 1,\n        \"document_id\": 1,\n        \"section_title\": \"Introduction to Neural Networks: Building Blocks of Deep Learning\",\n        \"lesson_intro\": \"Neural networks form the backbone of modern artificial intelligence, enabling computers to recognize patterns much like the human brain. In this section, we'll explore the fundamental concepts behind neural networks and understand how they process information. This knowledge is essential for anyone interested in machine learning and AI applications.\",\n        \"key_points\": [\n            \"Network Architecture: Neural networks consist of interconnected layers of neurons. Each layer processes information in a specific way, with input layers receiving data, hidden layers performing computations, and output layers producing results.\",\n            \"Learning Process: Through backpropagation, neural networks adjust their internal weights based on training data, gradually improving their accuracy in pattern recognition tasks.\",\n            \"Activation Functions: These mathematical functions determine how neurons process and transmit information, with common types including ReLU, sigmoid, and tanh functions.\"\n        ],\n        \"definitions\": {\n            \"Neuron\": \"The basic computational unit of a neural network, inspired by biological neurons. It receives inputs, applies weights and biases, and produces an output through an activation function.\",\n            \"Backpropagation\": \"A training algorithm that calculates the gradient of the error function with respect to the network weights, enabling the network to learn from its mistakes and improve accuracy.\"\n        },\n        \"examples\": [\n            {\n                \"title\": \"Image Recognition in Healthcare\",\n                \"description\": \"In medical imaging, neural networks help detect abnormalities in X-rays. For example, a convolutional neural network (CNN) processes a chest X-ray image through multiple layers: first identifying basic patterns like edges, then combining these into more complex features like tissue textures, and finally recognizing potential tumors or lesions.\"\n            }\n        ],\n        \"section_summary\": \"Neural networks represent a powerful approach to machine learning, mimicking the human brain's structure to process and learn from data. Through carefully designed architectures and training processes, these networks can recognize complex patterns and make intelligent decisions. Understanding these fundamentals provides a strong foundation for exploring more advanced AI applications.\",\n        \"next_topic\": \"Training Neural Networks: Optimization Techniques and Best Practices\",\n        \"task\": \"Design a simple neural network architecture for a specific problem: Choose between image classification, sentiment analysis, or price prediction. Sketch the network layers, specify the number of neurons in each layer, and explain why you chose this structure. Compare your design with existing solutions online.\",\n        \"order\": 0,\n        \"created_at\": \"2024-03-21T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-21T12:00:00.000000Z\"\n    },\n    \"questions\": [\n        {\n            \"id\": 1,\n            \"enhanced_note_id\": 1,\n            \"type\": \"mcq\",\n            \"question\": \"Which component of a neural network is primarily responsible for introducing non-linearity into the model?\",\n            \"choices\": [\n                \"Activation functions\",\n                \"Weight matrices\",\n                \"Input layers\",\n                \"Bias terms\"\n            ],\n            \"correct_answer\": \"Activation functions\",\n            \"explanation\": \"Activation functions introduce non-linearity into neural networks, allowing them to learn complex patterns. Without activation functions, the network would only be capable of learning linear relationships.\",\n            \"order\": 0\n        },\n        {\n            \"id\": 2,\n            \"enhanced_note_id\": 1,\n            \"type\": \"fill_blank\",\n            \"question\": \"The process of adjusting weights based on the error gradient is called _____.\",\n            \"correct_answer\": \"backpropagation\",\n            \"explanation\": \"Backpropagation is the fundamental algorithm that allows neural networks to learn from their mistakes by adjusting weights based on the calculated error gradient.\",\n            \"order\": 1\n        }\n    ]\n}"
+						},
+						{
+							"name": "AI Generation Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/documents/{{document_id}}/enhanced-notes/generate"
+								}
+							},
+							"status": "Service Unavailable",
+							"code": 503,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Failed to generate enhanced study notes\",\n    \"error\": \"generation_error\",\n    \"details\": \"Unexpected response format from Gemini API\"\n}"
+						},
+						{
+							"name": "Database Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/documents/{{document_id}}/enhanced-notes/generate"
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Failed to save enhanced study notes\",\n    \"error\": \"database_error\",\n    \"details\": \"Table 'ainotes.enhanced_study_note_questions' doesn't exist\"\n}"
+						},
+						{
+							"name": "No Study Notes Found",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/documents/{{document_id}}/enhanced-notes/generate"
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"No study notes found for this document\",\n    \"error\": \"not_found\",\n    \"details\": \"Please generate study notes first before generating enhanced notes\"\n}"
 						}
 					]
 				},
@@ -1583,7 +1679,7 @@
 								"{{enhanced_note_id}}"
 							]
 						},
-						"description": "Get a specific enhanced study note with its questions"
+						"description": "Get a specific enhanced study note with its comprehensive learning content and interactive questions."
 					},
 					"response": [
 						{
@@ -1605,7 +1701,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"enhanced_note\": {\n        \"id\": 1,\n        \"document_id\": 1,\n        \"section_title\": \"Introduction to Machine Learning\",\n        \"key_points\": [\"Point 1\", \"Point 2\", \"Point 3\"],\n        \"definitions\": {\"Term 1\": \"Definition 1\", \"Term 2\": \"Definition 2\"},\n        \"examples\": [{\"title\": \"Example 1\", \"description\": \"Description 1\"}],\n        \"order\": 0,\n        \"created_at\": \"2024-03-21T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-21T12:00:00.000000Z\",\n        \"questions\": [\n            {\n                \"id\": 1,\n                \"enhanced_note_id\": 1,\n                \"type\": \"mcq\",\n                \"question\": \"What is machine learning?\",\n                \"choices\": [\"Option 1\", \"Option 2\", \"Option 3\"],\n                \"correct_answer\": \"Option 2\",\n                \"order\": 0\n            }\n        ]\n    }\n}"
+							"body": "{\n    \"enhanced_note\": {\n        \"id\": 1,\n        \"document_id\": 1,\n        \"section_title\": \"Introduction to Neural Networks: Building Blocks of Deep Learning\",\n        \"lesson_intro\": \"Neural networks form the backbone of modern artificial intelligence, enabling computers to recognize patterns much like the human brain. In this section, we'll explore the fundamental concepts behind neural networks and understand how they process information. This knowledge is essential for anyone interested in machine learning and AI applications.\",\n        \"key_points\": [\n            \"Network Architecture: Neural networks consist of interconnected layers of neurons. Each layer processes information in a specific way, with input layers receiving data, hidden layers performing computations, and output layers producing results.\",\n            \"Learning Process: Through backpropagation, neural networks adjust their internal weights based on training data, gradually improving their accuracy in pattern recognition tasks.\",\n            \"Activation Functions: These mathematical functions determine how neurons process and transmit information, with common types including ReLU, sigmoid, and tanh functions.\"\n        ],\n        \"definitions\": {\n            \"Neuron\": \"The basic computational unit of a neural network, inspired by biological neurons. It receives inputs, applies weights and biases, and produces an output through an activation function.\",\n            \"Backpropagation\": \"A training algorithm that calculates the gradient of the error function with respect to the network weights, enabling the network to learn from its mistakes and improve accuracy.\"\n        },\n        \"examples\": [\n            {\n                \"title\": \"Image Recognition in Healthcare\",\n                \"description\": \"In medical imaging, neural networks help detect abnormalities in X-rays. For example, a convolutional neural network (CNN) processes a chest X-ray image through multiple layers: first identifying basic patterns like edges, then combining these into more complex features like tissue textures, and finally recognizing potential tumors or lesions.\"\n            }\n        ],\n        \"section_summary\": \"Neural networks represent a powerful approach to machine learning, mimicking the human brain's structure to process and learn from data. Through carefully designed architectures and training processes, these networks can recognize complex patterns and make intelligent decisions. Understanding these fundamentals provides a strong foundation for exploring more advanced AI applications.\",\n        \"next_topic\": \"Training Neural Networks: Optimization Techniques and Best Practices\",\n        \"task\": \"Design a simple neural network architecture for a specific problem: Choose between image classification, sentiment analysis, or price prediction. Sketch the network layers, specify the number of neurons in each layer, and explain why you chose this structure. Compare your design with existing solutions online.\",\n        \"order\": 0,\n        \"created_at\": \"2024-03-21T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-21T12:00:00.000000Z\",\n        \"questions\": [\n            {\n                \"id\": 1,\n                \"enhanced_note_id\": 1,\n                \"type\": \"mcq\",\n                \"question\": \"Which component of a neural network is primarily responsible for introducing non-linearity into the model?\",\n                \"choices\": [\n                    \"Activation functions\",\n                    \"Weight matrices\",\n                    \"Input layers\",\n                    \"Bias terms\"\n                ],\n                \"correct_answer\": \"Activation functions\",\n                \"explanation\": \"Activation functions introduce non-linearity into neural networks, allowing them to learn complex patterns. Without activation functions, the network would only be capable of learning linear relationships.\",\n                \"order\": 0\n            },\n            {\n                \"id\": 2,\n                \"enhanced_note_id\": 1,\n                \"type\": \"fill_blank\",\n                \"question\": \"The process of adjusting weights based on the error gradient is called _____.\",\n                \"correct_answer\": \"backpropagation\",\n                \"explanation\": \"Backpropagation is the fundamental algorithm that allows neural networks to learn from their mistakes by adjusting weights based on the calculated error gradient.\",\n                \"order\": 1\n            }\n        ]\n    }\n}"
 						}
 					]
 				},
@@ -1665,6 +1761,152 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Answer Validation",
+			"item": [
+				{
+					"name": "Validate Answer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What is the primary purpose of the after() method in Tkinter?\",\n    \"correct_answer\": \"To create a continuous animation loop\",\n    \"user_answer\": \"To create a continous animation loop\",\n    \"question_type\": \"fill_blank\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/validate-answer",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"validate-answer"
+							]
+						},
+						"description": "Validate a user's answer using AI to check for semantic similarity and handle typos/formatting differences."
+					},
+					"response": [
+						{
+							"name": "Success - Correct with Minor Typo",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"question\": \"What is the primary purpose of the after() method in Tkinter?\",\n    \"correct_answer\": \"To create a continuous animation loop\",\n    \"user_answer\": \"To create a continous animation loop\",\n    \"question_type\": \"fill_blank\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/validate-answer"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"is_correct\": true,\n    \"confidence\": 95,\n    \"feedback\": \"Your answer is correct! There was a minor typo ('continous' instead of 'continuous') but the meaning is perfectly clear.\",\n    \"similarity_score\": 98\n}"
+						},
+						{
+							"name": "Success - Partially Correct",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"question\": \"What are the three main types of machine learning?\",\n    \"correct_answer\": \"Supervised Learning, Unsupervised Learning, and Reinforcement Learning\",\n    \"user_answer\": \"Supervised, unsupervised, and deep learning\",\n    \"question_type\": \"short_answer\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/validate-answer"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"is_correct\": false,\n    \"confidence\": 85,\n    \"feedback\": \"Your answer is partially correct. You correctly identified supervised and unsupervised learning, but the third main type is Reinforcement Learning, not Deep Learning. Deep Learning is actually a subset of machine learning that can be used in any of the three main types.\",\n    \"similarity_score\": 70\n}"
+						},
+						{
+							"name": "Validation Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"question\": \"What is machine learning?\",\n    \"user_answer\": \"A type of AI\",\n    \"question_type\": \"invalid_type\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/validate-answer"
+								}
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Invalid request data\",\n    \"errors\": {\n        \"correct_answer\": [\n            \"The correct answer field is required.\"\n        ],\n        \"question_type\": [\n            \"The selected question type is invalid.\"\n        ]\n    }\n}"
+						},
+						{
+							"name": "AI Service Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"question\": \"What is machine learning?\",\n    \"correct_answer\": \"A subset of artificial intelligence that enables systems to learn from data\",\n    \"user_answer\": \"A type of AI that learns from data\",\n    \"question_type\": \"short_answer\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/validate-answer"
+								}
+							},
+							"status": "Service Unavailable",
+							"code": 503,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Failed to validate answer\",\n    \"error\": \"AI service error\",\n    \"details\": \"Unexpected response format from AI service\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Endpoints for validating user answers using AI to handle typos and semantic similarity"
 		}
 	],
 	"event": [

@@ -8,6 +8,7 @@ use App\Http\Controllers\StudyNoteController;
 use App\Http\Controllers\FlashcardController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\EnhancedStudyNoteController;
+use App\Http\Controllers\AnswerValidationController;
 
 // Public routes
 Route::post('register', [AuthController::class, 'register']);
@@ -42,4 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/documents/{document}/quizzes/generate', [QuizController::class, 'generate']);
     Route::get('/documents/{document}/quizzes/{quiz}', [QuizController::class, 'show']);
     Route::delete('/documents/{document}/quizzes/{quiz}', [QuizController::class, 'destroy']);
+
+    // Answer validation route
+    Route::post('/validate-answer', [AnswerValidationController::class, 'validateAnswer']);
 }); 
