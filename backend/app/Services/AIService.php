@@ -401,4 +401,223 @@ class AIService
         }
     }
 
+//     /**
+//      * Generate a title and description from text using Gemini 2.0 Flash
+//      */
+//     public function generateTitleAndDescription(string $text): array
+//     {
+//         // Limit to first 1000 words
+//         $words = preg_split('/\s+/', $text);
+//         $first1000 = implode(' ', array_slice($words, 0, 1000));
+
+//         $prompt = <<<EOT
+// You are an expert at summarizing documents.
+
+// Read the following text and generate:
+// - a concise, accurate, and informative "title"
+// - a 2-3 sentence "description" for the document
+
+// Return your response as a valid JSON object, with exactly these two fields: "title" and "description". Both fields must be in the SAME LANGUAGE as the input text, whether it is French, English, or any other language.
+
+// IMPORTANT:
+// - DO NOT include any markdown, code blocks, triple backticks, or commentary.
+// - DO NOT include any extra fields (such as description_fr, description_en, etc).
+// - DO NOT wrap your response in ```json or any other code block.
+// - DO NOT add any explanation, comments, or formatting outside the JSON.
+// - Your response MUST be a single, valid JSON object, and nothing else.
+// - If you include any code block, markdown, or extra formatting, the system will FAIL.
+
+// BAD EXAMPLE (DO NOT DO THIS):
+// ```json
+// {
+//   "title": "Titre",
+//   "description": "Description"
+// }
+// ```
+
+// GOOD EXAMPLE (DO THIS):
+// {
+//   "title": "Titre",
+//   "description": "Description"
+// }
+
+// Here is the text:
+
+// $first1000
+// EOT;
+
+//         try {
+//             $response = $this->makeRequest($prompt);
+//             $result = $this->cleanAndParseGeminiResponse($response);
+
+//             // The actual JSON is inside the 'summary' or 'content' field as a string
+//             $jsonString = $result['summary'] ?? $result['content'] ?? null;
+//             if (!$jsonString) {
+//                 throw new \Exception('No summary or content field in AI response');
+//             }
+
+//             // Remove all code block markers and trim whitespace/newlines
+//             $jsonString = preg_replace('/```json|```/i', '', $jsonString);
+//             $jsonString = trim($jsonString);
+
+//             // Double-decode: decode the string, and if the result is a string, decode again (with trim)
+//             $titleDesc = json_decode($jsonString, true);
+//             if (is_string($titleDesc)) {
+//                 $titleDesc = trim($titleDesc); // Ensure whitespace/newlines are removed before second decode
+//                 $titleDesc = json_decode($titleDesc, true);
+//             }
+
+//             // Robust extraction: always use 'title' and 'description' fields in the same language as input
+//             $title = $titleDesc['title'] ?? 'Untitled Document';
+//             $description = $titleDesc['description'] ?? 'No description could be generated.';
+
+//             if (!$title || !$description) {
+//                 Log::warning('AI response missing title or description: ' . json_encode($titleDesc));
+//             }
+
+//             return [
+//                 'title' => trim($title),
+//                 'description' => trim($description)
+//             ];
+//         } catch (\Exception $e) {
+//             Log::error('Failed to generate title/description: ' . $e->getMessage());
+//             return [
+//                 'title' => 'Untitled Document',
+//                 'description' => 'No description could be generated.'
+//             ];
+//         }
+//     }
+
+
+
+
+
+/**
+ * Generate a title and description from text using Gemini 2.0 Flash
+ */
+public function generateTitleAndDescription(string $text): array
+{
+    // Limit to first 1000 words
+    $words = preg_split('/\s+/', $text);
+    $first1000 = implode(' ', array_slice($words, 0, 1000));
+
+    $prompt = <<<EOT
+You are an expert at summarizing documents.
+
+Read the following text and generate:
+- a concise, accurate, and informative "title"
+- a 2-3 sentence "description" for the document
+
+Return your response as a valid JSON object, with exactly these two fields: "title" and "description". Both fields must be in the SAME LANGUAGE as the input text.
+
+IMPORTANT:
+- DO NOT include any markdown, code blocks, triple backticks, or commentary
+- DO NOT include any extra fields
+- DO NOT wrap your response in ```json or any other code block
+- DO NOT add any explanation, comments, or formatting outside the JSON
+- Your response MUST be a single, valid JSON object, and nothing else
+
+Example format:
+{"title": "Document Title", "description": "Brief description of the document content."}
+
+Here is the text:
+
+$first1000
+EOT;
+
+    try {
+        $response = $this->makeDirectRequest($prompt);
+        $result = $this->cleanJsonResponse($response);
+
+        return [
+            'title' => $result['title'] ?? 'Untitled Document',
+            'description' => $result['description'] ?? 'No description could be generated.'
+        ];
+    } catch (\Exception $e) {
+        Log::error('Failed to generate title/description: ' . $e->getMessage());
+        return [
+            'title' => 'Untitled Document',
+            'description' => 'No description could be generated.'
+        ];
+    }
+}
+
+/**
+ * Make a direct request to Gemini API for title/description generation
+ */
+private function makeDirectRequest(string $prompt): string
+{
+    try {
+        $response = $this->client->post($this->endpoint . '?key=' . $this->apiKey, [
+            'json' => [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'text' => $prompt
+                            ]
+                        ]
+                    ]
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.1, // Very low for consistent JSON output
+                    'topK' => 1,
+                    'topP' => 0.8,
+                    'maxOutputTokens' => 1024,
+                ]
+            ],
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ]
+        ]);
+
+        $body = json_decode($response->getBody()->getContents(), true);
+
+        if ($response->getStatusCode() !== 200 || empty($body['candidates'][0]['content']['parts'][0]['text'])) {
+            Log::error('Gemini API error: ' . json_encode($body));
+            throw new \Exception('Gemini API returned an error: ' . ($body['error']['message'] ?? 'Unknown error'));
+        }
+
+        return $body['candidates'][0]['content']['parts'][0]['text'];
+    } catch (\Exception $e) {
+        Log::error('API request failed: ' . $e->getMessage());
+        throw $e;
+    }
+}
+
+/**
+ * Clean and parse JSON response from Gemini API
+ */
+private function cleanJsonResponse(string $response): array
+{
+    Log::debug('Original Gemini response:', ['response' => $response]);
+    
+    // Remove common markdown artifacts
+    $cleaned = preg_replace('/```json\s*/', '', $response);
+    $cleaned = preg_replace('/```\s*/', '', $cleaned);
+    $cleaned = trim($cleaned);
+    
+    // Remove any leading/trailing non-JSON content
+    if (preg_match('/\{.*\}/s', $cleaned, $matches)) {
+        $cleaned = $matches[0];
+    }
+    
+    Log::debug('Cleaned response:', ['cleaned' => $cleaned]);
+    
+    $decoded = json_decode($cleaned, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        Log::error('JSON decode error: ' . json_last_error_msg());
+        Log::error('Failed to decode:', ['text' => $cleaned]);
+        throw new \Exception('Invalid JSON response from Gemini API: ' . json_last_error_msg());
+    }
+    
+    if (!is_array($decoded) || !isset($decoded['title']) || !isset($decoded['description'])) {
+        Log::error('Response missing required fields:', ['decoded' => $decoded]);
+        throw new \Exception('Response missing title or description fields');
+    }
+    
+    return $decoded;
+}
+
 } 

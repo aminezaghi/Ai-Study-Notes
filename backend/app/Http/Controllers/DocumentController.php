@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Services\PDFProcessingService;
+use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -12,10 +13,12 @@ use Illuminate\Support\Facades\DB;
 class DocumentController extends Controller
 {
     private PDFProcessingService $pdfService;
+    private AIService $aiService;
 
-    public function __construct(PDFProcessingService $pdfService)
+    public function __construct(PDFProcessingService $pdfService, AIService $aiService)
     {
         $this->pdfService = $pdfService;
+        $this->aiService = $aiService;
         // Add middleware to check document ownership for specific methods
         $this->middleware(function ($request, $next) {
             if ($request->route('document')) {
@@ -51,8 +54,8 @@ class DocumentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            // 'title' => 'required|string|max:255', // Removed, will be generated
+            // 'description' => 'nullable|string', // Removed, will be generated
             'files' => 'required|array|min:1',
             'files.*' => 'required|file|mimes:pdf|max:10240', // max 10MB per file
         ]);
@@ -60,10 +63,21 @@ class DocumentController extends Controller
         try {
             DB::beginTransaction();
 
+            // Process the first PDF file to extract text for AI
+            $firstFile = $request->file('files')[0];
+            $firstFilePath = $this->pdfService->storePDF($firstFile);
+            $firstPdfInfo = $this->pdfService->processPDF($firstFilePath);
+            $extractedText = $firstPdfInfo['extracted_text'];
+
+            // Generate title and description using AI
+            $aiResult = $this->aiService->generateTitleAndDescription($extractedText);
+            $title = $aiResult['title'] ?? 'Untitled Document';
+            $description = $aiResult['description'] ?? null;
+
             // Create the document
             $document = Auth::user()->documents()->create([
-                'title' => $request->title,
-                'description' => $request->description,
+                'title' => $title,
+                'description' => $description,
                 'status' => 'processing'
             ]);
 
