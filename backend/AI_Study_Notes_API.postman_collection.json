@@ -451,21 +451,23 @@
 							"mode": "formdata",
 							"formdata": [
 								{
-									"key": "title",
-									"value": "Test Document",
-									"type": "text"
-								},
-								{
-									"key": "description",
-									"value": "Test document description",
-									"type": "text"
-								},
-								{
 									"key": "files[]",
 									"type": "file",
 									"src": []
 								}
 							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/documents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"documents"
+							]
+						},
+						"description": "Upload a new document with PDF files.\n\n**Note:** You do NOT need to provide a title or description. The system will automatically generate a title and description using AI (Google Gemini 2.0 Flash) based on the content of the first PDF file. The generated title and description will be in the same language as the document (French, English, etc.).\n\nThe backend uses a strict AI prompt and robust cleaning/decoding logic to ensure the title and description are always extracted, even if the AI output is not perfect.\n\n**Form Data Parameters:**\n- files[]: One or more PDF files (required)\n\n**Example Response:**\n```json\n{\n  \"message\": \"Document uploaded successfully\",\n  \"document\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"title\": \"Analyse de la situation financière de l'entreprise : Filière AATC\",\n    \"description\": \"Ce document est une version provisoire d'une assistance technique pour le développement de l'offre de formation dans le secteur gestion-commerce, axée sur l'analyse de la situation financière d'une entreprise. Il détaille les concepts fondamentaux, les objectifs, la démarche de l'analyse financière, et l'analyse structurelle de l'activité et des résultats de l'entreprise.\",\n    \"status\": \"completed\",\n    \"created_at\": \"2024-07-02T12:15:10.000000Z\",\n    \"updated_at\": \"2024-07-02T12:15:10.000000Z\",\n    \"files\": [\n      {\n        \"id\": 1,\n        \"document_id\": 1,\n        \"original_filename\": \"analyse_financiere.pdf\",\n        \"file_path\": \"documents/analyse_financiere.pdf\",\n        \"page_count\": 22,\n        \"order\": 0,\n        \"created_at\": \"2024-07-02T12:15:10.000000Z\",\n        \"updated_at\": \"2024-07-02T12:15:10.000000Z\"\n      }\n    ]\n  }\n}\n```"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/documents",
@@ -493,16 +495,6 @@
 								"body": {
 									"mode": "formdata",
 									"formdata": [
-										{
-											"key": "title",
-											"value": "Machine Learning Basics",
-											"type": "text"
-										},
-										{
-											"key": "description",
-											"value": "Introduction to ML concepts",
-											"type": "text"
-										},
 										{
 											"key": "files[]",
 											"type": "file",
@@ -540,9 +532,9 @@
 									"mode": "formdata",
 									"formdata": [
 										{
-											"key": "title",
-											"value": "",
-											"type": "text"
+											"key": "files[]",
+											"type": "file",
+											"src": []
 										}
 									]
 								},
@@ -560,7 +552,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"message\": \"The given data was invalid.\",\n    \"errors\": {\n        \"title\": [\n            \"The title field is required.\"\n        ],\n        \"files\": [\n            \"The files field is required.\"\n        ]\n    }\n}"
+							"body": "{\n    \"message\": \"The given data was invalid.\",\n    \"errors\": {\n        \"files\": [\n            \"The files field is required.\"\n        ]\n    }\n}"
 						}
 					]
 				},

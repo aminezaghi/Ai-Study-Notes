@@ -8,6 +8,7 @@ An intelligent document processing system that uses AI to generate study notes, 
   - Upload and manage PDF documents
   - Support for multi-file documents
   - Automatic text extraction from PDFs using Smalot PDF Parser
+  - **Automatic AI-powered title and description generation** (no need to type them manually)
   - Document organization with titles and descriptions
   - Status tracking for processing
   - Page count tracking
@@ -105,6 +106,44 @@ An intelligent document processing system that uses AI to generate study notes, 
    ```bash
    php artisan storage:link
    ```
+
+7. **(Recommended for large PDFs)**: Increase your PHP memory limit in `php.ini` or at runtime. For example:
+   ```ini
+   memory_limit = 1024M
+   ```
+   Or add this to your controller before PDF processing:
+   ```php
+   ini_set('memory_limit', '1024M');
+   ```
+   This helps prevent memory errors when processing large or complex PDFs with Smalot PDF Parser.
+
+## AI-Powered Title & Description Generation
+
+- When you upload a document, the system automatically extracts the first 1000 words and sends them to Gemini 2.0 Flash.
+- The AI generates a title and description in the same language as the document (French, English, etc.).
+- **No need to type the title or description yourself!**
+- The system uses an ultra-strict prompt to ensure Gemini returns only a clean JSON object (no code blocks, markdown, or extra fields).
+- Robust double-decoding and cleaning logic ensures the title and description are always extracted, even if Gemini's output is not perfect.
+
+## Troubleshooting & FAQ
+
+### Out of Memory Error (PDF Parsing)
+- If you see an error like:
+  ```
+  Allowed memory size of 536870912 bytes exhausted (tried to allocate ...)
+  ```
+  This means the PDF is too large or complex for the current PHP memory limit. Increase the limit as described above, or split/optimize your PDF.
+
+### AI Title/Description Not Generated or Incorrect
+- The system uses a very strict prompt for Gemini, but if you still see issues:
+  - Make sure your Gemini API key and endpoint are correct.
+  - Try re-uploading the document.
+  - Check logs for AI response errors or malformed JSON.
+  - The system will always try to extract the correct fields, even if Gemini adds extra formatting.
+
+### Gemini Output Contains Code Blocks or Extra Fields
+- The prompt instructs Gemini to return only a JSON object, but if you still see code blocks or extra fields, the backend will clean and double-decode the response to extract only the `title` and `description`.
+- If Gemini's output is still not parsed, check the logs for the raw AI response and adjust the prompt or cleaning logic if needed.
 
 ## API Endpoints
 
