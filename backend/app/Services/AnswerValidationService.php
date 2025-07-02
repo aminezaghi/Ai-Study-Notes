@@ -84,13 +84,22 @@ class AnswerValidationService
                "  \"feedback\": \"explanation string\",\n" .
                "  \"similarity_score\": number between 0-100\n" .
                "}\n\n" .
+
+               "Example of the expected output (if the question is in French):" .
+               "{\n" .
+               "  \"is_correct\": true,\n" .
+               "  \"confidence\": 90,\n" .
+               "  \"feedback\": \"Votre réponse est correcte.\",\n" .
+               "  \"similarity_score\": 95\n" .
+               "}\n\n" .
                
                "Rules:\n" .
                "1. For fill_blank: Allow minor typos/spacing differences\n" .
                "2. For short_answer: Focus on meaning, not exact wording\n" .
                "3. Give helpful feedback explaining why the answer is right/wrong\n" .
                "4. Use similarity_score for how close the answer is\n" .
-               "5. IMPORTANT: Return ONLY the JSON object, no other text\n\n" .
+               "5. if the question is in french, the answer must be in french !important\n" .
+               "6. IMPORTANT: Return ONLY the JSON object, no other text\n\n" .
                
                "Evaluate this answer now:";
     }
