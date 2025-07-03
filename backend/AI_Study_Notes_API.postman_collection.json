@@ -38,7 +38,7 @@
 								"register"
 							]
 						},
-						"description": "Register a new user. Returns a success message."
+						"description": "Register a new user. Returns a success message. A verification code will be sent to the user's email and must be verified before login."
 					},
 					"response": [
 						{
@@ -137,7 +137,7 @@
 								"login"
 							]
 						},
-						"description": "Login user and get access token. Returns only the token."
+						"description": "Login user and get access token. Returns only the token. Login is only possible after email verification."
 					},
 					"response": [
 						{
@@ -347,6 +347,176 @@
 							"body": "{\n    \"message\": \"Unauthenticated.\"\n}"
 						}
 					]
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 1,\n    \"verification_code\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/verify-email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"verify-email"
+							]
+						},
+						"description": "Verify a user's email address using a verification code."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user_id\": 1,\n    \"verification_code\": \"123456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/verify-email"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Email verified successfully\"\n}"
+						},
+						{
+							"name": "Invalid Code",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user_id\": 1,\n    \"verification_code\": \"123456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/verify-email"
+								}
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Invalid verification code\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Resend Verification Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/resend-verification-code",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"resend-verification-code"
+							]
+						},
+						"description": "Resend a verification code to a user's email address."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user_id\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/resend-verification-code"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Verification code sent successfully\"\n}"
+						},
+						{
+							"name": "User Not Found",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user_id\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/resend-verification-code"
+								}
+							},
+							"status": "NotFound",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"User not found\"\n}"
+						}
+					]
 				}
 			]
 		},
@@ -406,7 +576,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"documents\": [\n        {\n            \"id\": 1,\n            \"user_id\": 1,\n            \"title\": \"Machine Learning Basics\",\n            \"description\": \"Introduction to ML concepts\",\n            \"status\": \"completed\",\n            \"created_at\": \"2024-03-20T12:00:00.000000Z\",\n            \"updated_at\": \"2024-03-20T12:00:00.000000Z\",\n            \"files\": [\n                {\n                    \"id\": 1,\n                    \"document_id\": 1,\n                    \"original_filename\": \"ml_intro.pdf\",\n                    \"file_path\": \"documents/ml_intro.pdf\",\n                    \"page_count\": 15,\n                    \"order\": 0,\n                    \"created_at\": \"2024-03-20T12:00:00.000000Z\",\n                    \"updated_at\": \"2024-03-20T12:00:00.000000Z\"\n                }\n            ]\n        }\n    ]\n}"
+							"body": "{\n    \"document\": {\n        \"id\": 1,\n        \"user_id\": 1,\n        \"title\": \"Machine Learning Basics\",\n        \"description\": \"Introduction to ML concepts\",\n        \"status\": \"completed\",\n        \"created_at\": \"2024-03-20T12:00:00.000000Z\",\n        \"updated_at\": \"2024-03-20T12:00:00.000000Z\",\n        \"files\": [\n            {\n                \"id\": 1,\n                \"document_id\": 1,\n                \"original_filename\": \"ml_intro.pdf\",\n                \"file_path\": \"documents/ml_intro.pdf\",\n                \"page_count\": 15,\n                \"order\": 0,\n                \"created_at\": \"2024-03-20T12:00:00.000000Z\",\n                \"updated_at\": \"2024-03-20T12:00:00.000000Z\"\n            }\n        ],\n        \"study_notes\": [\n            {\n                \"id\": 1,\n                \"document_id\": 1,\n                \"content\": \"Detailed study notes content...\",\n                \"summary\": \"Brief summary of the content...\",\n                \"created_at\": \"2024-03-20T12:00:00.000000Z\",\n                \"updated_at\": \"2024-03-20T12:00:00.000000Z\"\n            }\n        ],\n        \"flashcards\": [\n            {\n                \"id\": 1,\n                \"document_id\": 1,\n                \"question\": \"What is machine learning?\",\n                \"answer\": \"Machine learning is a subset of artificial intelligence...\",\n                \"created_at\": \"2024-03-20T12:00:00.000000Z\",\n                \"updated_at\": \"2024-03-20T12:00:00.000000Z\"\n            }\n        ],\n        \"quiz_questions\": [\n            {\n                \"id\": 1,\n                \"document_id\": 1,\n                \"quiz_id\": 1,\n                \"question\": \"Which of the following is a type of machine learning?\",\n                \"type\": \"multiple_choice\",\n                \"options\": [\"Supervised Learning\", \"Manual Learning\", \"Basic Learning\", \"Simple Learning\"],\n                \"correct_answer\": \"Supervised Learning\",\n                \"explanation\": \"Supervised learning is a type of machine learning where the model learns from labeled data.\",\n                \"created_at\": \"2024-03-20T12:00:00.000000Z\",\n                \"updated_at\": \"2024-03-20T12:00:00.000000Z\"\n            }\n        ]\n    }\n}"
 						},
 						{
 							"name": "Unauthorized",
@@ -468,18 +638,7 @@
 							]
 						},
 						"description": "Upload a new document with PDF files.\n\n**Note:** You do NOT need to provide a title or description. The system will automatically generate a title and description using AI (Google Gemini 2.0 Flash) based on the content of the first PDF file. The generated title and description will be in the same language as the document (French, English, etc.).\n\nThe backend uses a strict AI prompt and robust cleaning/decoding logic to ensure the title and description are always extracted, even if the AI output is not perfect.\n\n**Form Data Parameters:**\n- files[]: One or more PDF files (required)\n\n**Example Response:**\n```json\n{\n  \"message\": \"Document uploaded successfully\",\n  \"document\": {\n    \"id\": 1,\n    \"user_id\": 1,\n    \"title\": \"Analyse de la situation financière de l'entreprise : Filière AATC\",\n    \"description\": \"Ce document est une version provisoire d'une assistance technique pour le développement de l'offre de formation dans le secteur gestion-commerce, axée sur l'analyse de la situation financière d'une entreprise. Il détaille les concepts fondamentaux, les objectifs, la démarche de l'analyse financière, et l'analyse structurelle de l'activité et des résultats de l'entreprise.\",\n    \"status\": \"completed\",\n    \"created_at\": \"2024-07-02T12:15:10.000000Z\",\n    \"updated_at\": \"2024-07-02T12:15:10.000000Z\",\n    \"files\": [\n      {\n        \"id\": 1,\n        \"document_id\": 1,\n        \"original_filename\": \"analyse_financiere.pdf\",\n        \"file_path\": \"documents/analyse_financiere.pdf\",\n        \"page_count\": 22,\n        \"order\": 0,\n        \"created_at\": \"2024-07-02T12:15:10.000000Z\",\n        \"updated_at\": \"2024-07-02T12:15:10.000000Z\"\n      }\n    ]\n  }\n}\n```"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/documents",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"documents"
-							]
-						},
-						"description": "Upload a new document with PDF files"
+						
 					},
 					"response": [
 						{

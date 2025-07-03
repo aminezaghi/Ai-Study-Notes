@@ -13,6 +13,8 @@ use App\Http\Controllers\AnswerValidationController;
 // Public routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
+Route::post('/resend-verification-code', [AuthController::class, 'resendVerificationCode']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
