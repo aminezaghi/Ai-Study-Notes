@@ -141,7 +141,7 @@ StudyMate leverages Google Gemini 2.0 Flash to automatically generate study mate
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/studymate.git
+git clone https://github.com/aminezaghi/studymate.git
 cd studymate
 ```
 
