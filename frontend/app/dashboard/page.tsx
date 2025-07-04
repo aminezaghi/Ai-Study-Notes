@@ -1,265 +1,346 @@
 "use client"
 
-import { useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { useEffect, useRef } from "react"
+import { motion } from "framer-motion"
+import { gsap } from "gsap"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ModernHeader } from "@/components/layout/modern-header"
-import { apiService } from "@/services/api"
-import { useAuthStore } from "@/store/auth-store"
-import { useDocumentStore } from "@/store/document-store"
-import { Plus, FileText, Calendar, TrendingUp, BookOpen, Brain, Zap } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { FileText, BookOpen, Brain, Zap, Plus, TrendingUp, Clock, Target } from "lucide-react"
+import Link from "next/link"
+import { useAuth } from "@/components/auth-provider"
+import { useQuery } from "@tanstack/react-query"
+import { apiClient } from "@/lib/api-client"
+
+interface Document {
+  id: number
+  title: string
+  description: string
+  status: string
+  created_at: string
+  files: Array<{
+    id: number
+    original_filename: string
+    page_count: number
+  }>
+}
 
 export default function DashboardPage() {
-  const { isAuthenticated } = useAuthStore()
-  const { documents, setDocuments } = useDocumentStore()
-  const router = useRouter()
+  const { user } = useAuth()
+  const statsRef = useRef<HTMLDivElement>(null)
+  const cardsRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login")
-    }
-  }, [isAuthenticated, router])
-
-  const { data, isLoading, error } = useQuery({
+  const { data: documents, isLoading } = useQuery({
     queryKey: ["documents"],
-    queryFn: () => apiService.getDocuments(),
-    enabled: isAuthenticated,
+    queryFn: async () => {
+      const response = await apiClient.get("/documents")
+      return response.data.documents as Document[]
+    },
   })
 
   useEffect(() => {
-    if (data) {
-      setDocuments(data)
-    }
-  }, [data, setDocuments])
+    if (!isLoading) {
+      // Animate stats cards
+      gsap.set(".stat-card", { opacity: 0, y: 30 });
+      const statsAnimation = gsap.to(".stat-card", {
+        duration: 0.8,
+        y: 0,
+        opacity: 1,
+        stagger: 0.1,
+        ease: "power3.out",
+        delay: 0.2,
+      });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-500/20 text-green-400 border-green-500/30"
-      case "processing":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-      case "pending":
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30"
-      case "failed":
-        return "bg-red-500/20 text-red-400 border-red-500/30"
-      default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/30"
+      // Animate document cards only if present
+      let documentsAnimation = null;
+      if (documents && documents.length > 0 && document.querySelectorAll('.document-card').length > 0) {
+        gsap.set(".document-card", { opacity: 0, x: -30 });
+        documentsAnimation = gsap.to(".document-card", {
+          duration: 0.8,
+          x: 0,
+          opacity: 1,
+          stagger: 0.1,
+          ease: "power3.out",
+          delay: 0.5,
+        });
+      }
+
+      return () => {
+        statsAnimation.kill();
+        if (documentsAnimation) documentsAnimation.kill();
+      };
     }
-  }
+  }, [documents, isLoading]);
 
   const stats = [
     {
       title: "Total Documents",
-      value: documents.length.toString(),
-      icon: <FileText className="h-5 w-5" />,
-      change: "+12%",
-      changeType: "positive" as const,
+      value: documents?.length || 0,
+      icon: <FileText className="h-6 w-6" />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-100 dark:bg-blue-900/20",
     },
     {
-      title: "Study Notes",
-      value: documents.reduce((acc, doc) => acc + (doc.study_notes?.length || 0), 0).toString(),
-      icon: <BookOpen className="h-5 w-5" />,
-      change: "+23%",
-      changeType: "positive" as const,
+      title: "Study Sessions",
+      value: "24",
+      icon: <Clock className="h-6 w-6" />,
+      color: "text-green-600",
+      bgColor: "bg-green-100 dark:bg-green-900/20",
     },
     {
-      title: "Flashcards",
-      value: documents.reduce((acc, doc) => acc + (doc.flashcards?.length || 0), 0).toString(),
-      icon: <Brain className="h-5 w-5" />,
-      change: "+5%",
-      changeType: "positive" as const,
+      title: "Flashcards Created",
+      value: "156",
+      icon: <Brain className="h-6 w-6" />,
+      color: "text-purple-600",
+      bgColor: "bg-purple-100 dark:bg-purple-900/20",
     },
     {
-      title: "Quiz Questions",
-      value: documents.reduce((acc, doc) => acc + (doc.quiz_questions?.length || 0), 0).toString(),
-      icon: <Zap className="h-5 w-5" />,
-      change: "+18%",
-      changeType: "positive" as const,
+      title: "Quizzes Completed",
+      value: "12",
+      icon: <Target className="h-6 w-6" />,
+      color: "text-orange-600",
+      bgColor: "bg-orange-100 dark:bg-orange-900/20",
     },
   ]
 
-  if (!isAuthenticated) return null
+  const quickActions = [
+    {
+      title: "Upload Document",
+      description: "Add new PDF documents to generate study materials",
+      icon: <Plus className="h-8 w-8" />,
+      href: "/dashboard/upload",
+      color: "from-blue-600 to-purple-600",
+    },
+    {
+      title: "Browse Documents",
+      description: "View and manage your uploaded documents",
+      icon: <FileText className="h-8 w-8" />,
+      href: "/dashboard/documents",
+      color: "from-green-600 to-blue-600",
+    },
+    {
+      title: "Study Notes",
+      description: "Access AI-generated study notes",
+      icon: <BookOpen className="h-8 w-8" />,
+      href: "/dashboard/notes",
+      color: "from-purple-600 to-pink-600",
+    },
+    {
+      title: "Practice Quiz",
+      description: "Test your knowledge with interactive quizzes",
+      icon: <Zap className="h-8 w-8" />,
+      href: "/dashboard/quizzes",
+      color: "from-orange-600 to-red-600",
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      <ModernHeader />
-      <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome back! 👋</h1>
-          <p className="text-gray-400">Here's what's happening with your studies today.</p>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Welcome back, {user?.name?.split(" ")[0]}! 👋</h1>
+            <p className="text-muted-foreground mt-2">
+              Ready to continue your learning journey? Let's make today productive.
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <TrendingUp className="h-4 w-4" />
+              <span>Learning streak: 5 days</span>
+            </div>
+          </div>
         </div>
+      </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card
-              key={index}
-              className="bg-gray-800 border-gray-700 hover:border-purple-500/50 transition-all duration-300"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-400">{stat.title}</p>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
+      {/* Stats Cards */}
+      <div ref={statsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => (
+          <Card key={stat.title} className="stat-card hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <div className={stat.color}>{stat.icon}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {quickActions.map((action, index) => (
+            <Link key={action.title} href={action.href}>
+              <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer">
+                <CardContent className="p-6 text-center">
+                  <div
+                    className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${action.color} rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <div className="text-white">{action.icon}</div>
                   </div>
-                  <div className="text-purple-400">{stat.icon}</div>
-                </div>
-                <div className="flex items-center mt-4">
-                  <TrendingUp className="h-4 w-4 text-green-400 mr-1" />
-                  <span className="text-sm text-green-400">{stat.change}</span>
-                  <span className="text-sm text-gray-400 ml-1">from last month</span>
-                </div>
-              </CardContent>
-            </Card>
+                  <h3 className="text-lg font-semibold mb-2">{action.title}</h3>
+                  <p className="text-sm text-muted-foreground">{action.description}</p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Documents Section */}
-          <div className="lg:col-span-2">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white">Your Documents</h2>
-                <p className="text-gray-400">Manage and access your study materials</p>
-              </div>
-              <Button onClick={() => router.push("/documents/upload")} className="bg-purple-600 hover:bg-purple-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Upload Document
-              </Button>
-            </div>
-
-            {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i} className="bg-gray-800 border-gray-700">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <Skeleton className="h-5 w-48 bg-gray-700" />
-                          <Skeleton className="h-4 w-32 bg-gray-700" />
-                        </div>
-                        <Skeleton className="h-6 w-20 bg-gray-700" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className="h-4 w-24 bg-gray-700" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : error ? (
-              <Card className="bg-gray-800 border-gray-700">
-                <CardContent className="pt-6">
-                  <p className="text-center text-gray-400">Failed to load documents. Please try again.</p>
-                </CardContent>
-              </Card>
-            ) : documents.length === 0 ? (
-              <Card className="bg-gray-800 border-gray-700">
-                <CardContent className="pt-6">
-                  <div className="text-center py-8">
-                    <FileText className="h-16 w-16 mx-auto text-gray-600 mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">No documents yet</h3>
-                    <p className="text-gray-400 mb-6">
-                      Upload your first PDF to get started with AI-generated study materials
-                    </p>
-                    <Button
-                      onClick={() => router.push("/documents/upload")}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Upload Document
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {documents.map((document) => (
-                  <Card
-                    key={document.id}
-                    className="bg-gray-800 border-gray-700 hover:border-purple-500/50 cursor-pointer transition-all duration-300 group"
-                    onClick={() => router.push(`/documents/${document.id}`)}
-                  >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-white group-hover:text-purple-400 transition-colors line-clamp-1">
-                            {document.title}
-                          </CardTitle>
-                          <CardDescription className="text-gray-400 line-clamp-2 mt-1">
-                            {document.description}
-                          </CardDescription>
-                        </div>
-                        <Badge className={getStatusColor(document.status)}>{document.status}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center text-sm text-gray-400">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(document.created_at).toLocaleDateString()}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-gray-600 text-gray-300 hover:bg-gray-700"
-                  onClick={() => router.push("/documents/upload")}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Upload New Document
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-gray-600 text-gray-300 hover:bg-gray-700"
-                  onClick={() => router.push("/documents")}
-                >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Browse Documents
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-gray-600 text-gray-300 hover:bg-gray-700"
-                  onClick={() => router.push("/flashcards")}
-                >
-                  <Brain className="h-4 w-4 mr-2" />
-                  Practice Flashcards
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-6">
-                  <p className="text-gray-400">No recent activity</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      {/* Recent Documents */}
+      <div ref={cardsRef}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold">Recent Documents</h2>
+          <Link href="/dashboard/documents">
+            <Button variant="outline">View All</Button>
+          </Link>
         </div>
-      </main>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : documents && documents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {documents.slice(0, 6).map((document, index) => (
+              <Link key={document.id} href={`/dashboard/documents/${document.id}`}>
+                <Card className="document-card group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                          {document.title}
+                        </CardTitle>
+                        <CardDescription className="mt-2 line-clamp-2">{document.description}</CardDescription>
+                      </div>
+                      <div
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          document.status === "completed"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+                        }`}
+                      >
+                        {document.status}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4" />
+                        <span>{document.files?.length || 0} files</span>
+                      </div>
+                      <span>{new Date(document.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Card className="text-center py-12">
+            <CardContent>
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No documents yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Upload your first PDF document to get started with AI-powered study materials.
+              </p>
+              <Link href="/dashboard/upload">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Upload Document
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Learning Progress */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>This Week's Progress</CardTitle>
+            <CardDescription>Your learning activity overview</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Documents Processed</span>
+                <span className="text-sm text-muted-foreground">3/5</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-blue-600 h-2 rounded-full w-3/5"></div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Quiz Score Average</span>
+                <span className="text-sm text-muted-foreground">85%</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-green-600 h-2 rounded-full w-4/5"></div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Study Time</span>
+                <span className="text-sm text-muted-foreground">12h 30m</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-purple-600 h-2 rounded-full w-2/3"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Study Recommendations</CardTitle>
+            <CardDescription>Personalized suggestions for you</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                <div>
+                  <p className="text-sm font-medium">Review Machine Learning flashcards</p>
+                  <p className="text-xs text-muted-foreground">Last studied 3 days ago</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
+                <div>
+                  <p className="text-sm font-medium">Complete Data Structures quiz</p>
+                  <p className="text-xs text-muted-foreground">85% completion rate</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
+                <div>
+                  <p className="text-sm font-medium">Generate notes for new document</p>
+                  <p className="text-xs text-muted-foreground">Uploaded yesterday</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

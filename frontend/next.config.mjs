@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: [],
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -9,10 +8,6 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: [],
-  },
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
 }
 
