@@ -44,6 +44,23 @@ An intelligent document processing system that uses AI to generate study notes, 
   - Detailed content analysis
   - Structured learning materials
 
+- ✉️ **Email Verification System**
+  - Secure user registration with email verification
+  - 6-digit verification codes sent via email
+  - 15-minute expiration for verification codes
+  - Email verification required before login
+  - Resend verification code functionality
+  - Automatic email sending with error handling
+
+- ✅ **Answer Validation**
+  - AI-powered answer validation for quiz questions
+  - Support for multiple question types:
+    - Multiple choice questions (MCQ)
+    - Fill in the blanks
+    - Short answer questions
+  - Intelligent scoring and feedback
+  - Detailed validation results with explanations
+
 ## Tech Stack
 
 - **Backend**: Laravel 12.x
@@ -53,6 +70,7 @@ An intelligent document processing system that uses AI to generate study notes, 
 - **PDF Processing**: Smalot PDF Parser
 - **File Storage**: Laravel Storage
 - **HTTP Client**: Guzzle HTTP
+- **Email**: Laravel Mail with SMTP support
 
 ## Prerequisites
 
@@ -60,6 +78,7 @@ An intelligent document processing system that uses AI to generate study notes, 
 - Composer
 - MySQL 8.0+
 - Google Gemini API Key
+- SMTP server for email verification
 - Sufficient storage space for PDF files
 
 ## Installation
@@ -95,6 +114,16 @@ An intelligent document processing system that uses AI to generate study notes, 
    GEMINI_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
 
    FILESYSTEM_DISK=public
+
+   # Email Configuration (for verification system)
+   MAIL_MAILER=smtp
+   MAIL_HOST=your_smtp_host
+   MAIL_PORT=587
+   MAIL_USERNAME=your_email_username
+   MAIL_PASSWORD=your_email_password
+   MAIL_ENCRYPTION=tls
+   MAIL_FROM_ADDRESS=your_from_email
+   MAIL_FROM_NAME="${APP_NAME}"
    ```
 
 5. Run migrations:
@@ -125,6 +154,45 @@ An intelligent document processing system that uses AI to generate study notes, 
 - The system uses an ultra-strict prompt to ensure Gemini returns only a clean JSON object (no code blocks, markdown, or extra fields).
 - Robust double-decoding and cleaning logic ensures the title and description are always extracted, even if Gemini's output is not perfect.
 
+## Email Verification System
+
+### Registration Flow
+1. User registers with name, email, and password
+2. System generates a 6-digit verification code
+3. Verification code is sent to user's email
+4. User must verify email before logging in
+5. Verification codes expire after 15 minutes
+
+### Features
+- **Secure Code Generation**: 6-digit numeric codes with proper padding
+- **Automatic Expiration**: Codes expire after 15 minutes for security
+- **Resend Functionality**: Users can request new codes if needed
+- **Error Handling**: Graceful handling of email sending failures
+- **Duplicate Prevention**: Users cannot verify already verified emails
+
+### Email Configuration
+Make sure to configure your SMTP settings in the `.env` file. The system uses Laravel's built-in mail system to send verification codes.
+
+## Answer Validation System
+
+### Supported Question Types
+- **Multiple Choice Questions (MCQ)**: Validates exact answer matches
+- **Fill in the Blanks**: AI-powered semantic validation
+- **Short Answer Questions**: Intelligent answer comparison using AI
+
+### Features
+- **AI-Powered Validation**: Uses Google Gemini for intelligent answer comparison
+- **Flexible Scoring**: Provides detailed feedback and scoring
+- **Multi-language Support**: Works with questions in any language
+- **Robust Error Handling**: Graceful handling of validation failures
+
+### Usage
+Send a POST request to `/api/validate-answer` with:
+- `question`: The question text
+- `correct_answer`: The expected correct answer
+- `user_answer`: The user's submitted answer
+- `question_type`: Type of question (mcq, fill_blank, short_answer)
+
 ## Troubleshooting & FAQ
 
 ### Out of Memory Error (PDF Parsing)
@@ -145,17 +213,30 @@ An intelligent document processing system that uses AI to generate study notes, 
 - The prompt instructs Gemini to return only a JSON object, but if you still see code blocks or extra fields, the backend will clean and double-decode the response to extract only the `title` and `description`.
 - If Gemini's output is still not parsed, check the logs for the raw AI response and adjust the prompt or cleaning logic if needed.
 
+### Email Verification Issues
+- **Verification Code Not Received**: Check your SMTP configuration and spam folder
+- **Code Expired**: Use the resend verification code endpoint
+- **Invalid Code**: Ensure you're using the latest code sent to your email
+- **Already Verified**: Check if your email is already verified before attempting verification
+
+### Answer Validation Errors
+- **AI Service Unavailable**: Check your Gemini API configuration
+- **Invalid Question Type**: Ensure question_type is one of: mcq, fill_blank, short_answer
+- **Validation Timeout**: Large documents may take longer to process
+
 ## API Endpoints
 
-### Authentication
-- `POST /api/register` - Register a new user
-- `POST /api/login` - Login user
+### Authentication & Email Verification
+- `POST /api/register` - Register a new user (requires email verification)
+- `POST /api/login` - Login user (requires verified email)
 - `POST /api/logout` - Logout user
 - `GET /api/user` - Get authenticated user
+- `POST /api/verify-email` - Verify email with 6-digit code
+- `POST /api/resend-verification-code` - Resend verification code
 
 ### Documents
 - `GET /api/documents` - List all documents
-- `POST /api/documents` - Upload new document
+- `POST /api/documents` - Upload new document (AI auto-generates title/description)
 - `GET /api/documents/{id}` - Get document details
 - `DELETE /api/documents/{id}` - Delete document
 - `GET /api/documents/{id}/files` - List document files
@@ -187,6 +268,14 @@ An intelligent document processing system that uses AI to generate study notes, 
 - `GET /api/documents/{document}/quizzes/{quiz}` - Get quiz details
 - `DELETE /api/documents/{document}/quizzes/{quiz}` - Delete quiz
 
+### Answer Validation
+- `POST /api/validate-answer` - Validate user answers using AI
+  - Parameters:
+    - `question`: Question text
+    - `correct_answer`: Expected correct answer
+    - `user_answer`: User's submitted answer
+    - `question_type`: Type of question (mcq, fill_blank, short_answer)
+
 ## AI Service Features
 
 ### Text Processing
@@ -213,7 +302,7 @@ The API uses standard HTTP response codes:
 - `201` - Created
 - `400` - Bad Request
 - `401` - Unauthorized
-- `403` - Forbidden
+- `403` - Forbidden (Email not verified)
 - `404` - Not Found
 - `422` - Validation Error
 - `500` - Server Error
@@ -248,7 +337,7 @@ Error responses follow this format:
 ## Database Schema
 
 ### Core Models
-- **User**: Authentication and user management
+- **User**: Authentication and user management with email verification fields
 - **Document**: Document metadata and organization
 - **DocumentFile**: Individual PDF files within documents
 - **StudyNote**: Basic study notes generated from documents
@@ -257,6 +346,14 @@ Error responses follow this format:
 - **Quiz**: Quiz containers with multiple questions
 - **QuizQuestion**: Individual quiz questions with answers
 - **NoteQuestion**: Questions generated from enhanced study notes
+
+### User Model Fields
+- `name`: User's full name
+- `email`: Email address (must be verified)
+- `password`: Hashed password
+- `email_verification_code`: 6-digit verification code
+- `email_verification_code_expires_at`: Code expiration timestamp
+- `email_verified_at`: Email verification timestamp
 
 ## Contributing
 
@@ -276,3 +373,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Google Gemini](https://deepmind.google/technologies/gemini/) - AI model for text generation
 - [Smalot PDF Parser](https://github.com/smalot/pdfparser) - PDF text extraction
 - [Laravel Sanctum](https://laravel.com/docs/sanctum) - API authentication
+- [Laravel Mail](https://laravel.com/docs/mail) - Email functionality
